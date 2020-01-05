@@ -16,3 +16,7 @@ cargo run --bin xor_encrypt ICE < res/s1c5.txt
 s1c6 (find xor key)
 ---
 cargo run --release --bin find_xor_key 30 < res/s1c6.txt
+
+s1c7 (decrypt aes-ecb)
+---
+cargo run --release --bin decrypt_aes "YELLOW SUBMARINE" < res/s1c7.txt

@@ -1,3 +1,6 @@
+// reexport lib_aes for cryptopals crate users
+pub mod lib_aes;
+
 use std::io::{self, Read};
 
 pub fn load_stdin() -> String {

@@ -11,3 +11,5 @@ edition = "2018"
 #path = "src/base64_encode/main.rs"
 
 [dependencies]
+aes = "0.3.2"
+block-modes = "0.3.3"
