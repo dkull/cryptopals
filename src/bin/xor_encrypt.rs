@@ -12,5 +12,6 @@ fn main() {
     let key = key.bytes().collect::<Vec<_>>();
     let encrypted = cryptopals::xor_arrays(&data, &key);
     let as_hex = cryptopals::bytes_to_hex(&encrypted);
-    println!("{}", as_hex);
+    println!("hex: {}", as_hex);
+    println!("base64: {}", cryptopals::bytes_to_base64(&encrypted));
 }

@@ -7,7 +7,7 @@ fn main() {
     let mut best = (-0xff, 0x00, vec![]);
     for line in data.lines() {
         let line = cryptopals::hex_to_bytes(line);
-        let (score, key, output) = cryptopals::find_xor_key_eng(&line, 1);
+        let (score, key, output) = cryptopals::find_xor_key_eng(&line);
         if score > best.0 && String::from_utf8(output.clone()).is_ok() {
             best = (score, key, output);
         }

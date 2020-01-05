@@ -12,3 +12,7 @@ cargo run --bin detect_singlechar_xor < res/s1c4.txt
 s1c5
 ---
 cargo run --bin xor_encrypt ICE < res/s1c5.txt
+
+s1c6 (find xor key)
+---
+cargo run --release --bin find_xor_key 30 < res/s1c6.txt
