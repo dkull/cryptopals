@@ -2,7 +2,7 @@ use std::io::{self, Read};
 
 pub fn load_stdin() -> String {
     let mut buffer = String::new();
-    println!("reading input from stdin...");
+    eprintln!("reading input from stdin...");
     io::stdin().lock().read_to_string(&mut buffer).unwrap();
     buffer
 }

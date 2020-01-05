@@ -3,10 +3,10 @@ extern crate cryptopals;
 use std::env;
 
 fn main() {
-    println!("(s1c5)");
+    eprintln!("(s1c5)");
     let data = cryptopals::load_stdin();
     let key = &env::args().collect::<Vec<_>>()[1];
-    println!("using key '{}'", key);
+    eprintln!("using key '{}'", key);
 
     let data = data.bytes().collect::<Vec<_>>();
     let key = key.bytes().collect::<Vec<_>>();

@@ -11,4 +11,4 @@ cargo run --bin detect_singlechar_xor < res/s1c4.txt
 
 s1c5
 ---
-cargo run --bin xor_encrypt key < res/s1c5.txt
+cargo run --bin xor_encrypt ICE < res/s1c5.txt

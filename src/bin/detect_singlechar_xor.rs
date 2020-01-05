@@ -2,7 +2,7 @@ extern crate cryptopals;
 
 fn main() {
     let data = cryptopals::load_stdin();
-    println!("(s1c4)");
+    eprintln!("(s1c4)");
 
     let mut best = (-0xff, 0x00, vec![]);
     for line in data.lines() {
@@ -12,8 +12,8 @@ fn main() {
             best = (score, key, output);
         }
     }
-    println!("best candidate is {:?}", &best);
+    eprintln!("best candidate is {:?}", &best);
     let (_score, _key, bytes) = best;
     let text = String::from_utf8(bytes).expect("result should be text?");
-    println!("text: {}", text);
+    println!("{}", text);
 }
