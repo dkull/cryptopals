@@ -19,7 +19,7 @@ pub fn hex_to_bytes(data: &str) -> Vec<u8> {
             let val_b = lookup
                 .iter()
                 .position(|l| l == &d[1])
-                .expect(format!("second byte {:?} not in {:?}", d, lookup).as_str());
+                .expect("uneven characters?");
             (val_a * 16 + val_b) as u8
         })
         .collect::<Vec<u8>>()
@@ -138,10 +138,7 @@ fn xor_arrays_works() {
 }
 
 pub fn english_frequency_score(data: &[u8]) -> isize {
-    use std::collections::HashMap;
-
     let reference = "etaoins";
-    let expected_percent = 58;
 
     let mut score = 0;
     data.to_vec().windows(3).for_each(|triplet| {
@@ -149,13 +146,13 @@ pub fn english_frequency_score(data: &[u8]) -> isize {
         let b = triplet[1];
         let c = triplet[2];
 
-        if (a == b) {
+        if a == b {
             score -= 1;
         }
         if (a == b) && (b == c) {
             score -= 2;
         }
-        if a != b && b != c && b == (' ' as u8) {
+        if a != b && b != c && b == b' ' {
             score += 2;
         }
         if reference.contains(|r| r == (a as char)) {
@@ -192,7 +189,7 @@ generation of knowledge, exceeds the short vehemence of any carnal pleasure.";
     assert_eq!(frequency_delta, 258);
 }
 
-pub fn find_xor_key_eng(data: &[u8], key_len: usize) -> (isize, u8, Vec<u8>) {
+pub fn find_xor_key_eng(data: &[u8], _key_len: usize) -> (isize, u8, Vec<u8>) {
     let mut best = (-100, 0x00, vec![]);
     for b in 1..=255u8 {
         let decrypted = xor_arrays(data, &[b]);
