@@ -105,3 +105,85 @@ fn bytes_to_base64_works() {
         "YW55IGNhcm5hbCBwbGVhc3VyZS4="
     );
 }
+
+pub fn bytes_to_hex(data: &[u8]) -> String {
+    data.to_vec()
+        .iter()
+        .map(|b| format!("{:02x}", b))
+        .collect::<Vec<_>>()
+        .join("")
+}
+#[test]
+pub fn bytes_to_hex_works() {
+    assert_eq!(bytes_to_hex(&[0x00, 0x01, 0x02, 0x03, 0xff]), "00010203ff");
+}
+
+pub fn xor_arrays(a: &[u8], b: &[u8]) -> Vec<u8> {
+    assert!(a.len() >= b.len());
+    a.to_vec()
+        .iter()
+        .zip(b.to_vec().iter().cycle())
+        .map(|(a, b)| a ^ b)
+        .collect()
+}
+
+#[test]
+fn xor_arrays_works() {
+    let first = hex_to_bytes("1c0111001f010100061a024b53535009181c");
+    let second = hex_to_bytes("686974207468652062756c6c277320657965");
+    let result = xor_arrays(&first, &second);
+    let in_hex = bytes_to_hex(&result);
+    assert_eq!(in_hex, "746865206b696420646f6e277420706c6179");
+}
+
+pub fn english_frequency_score(data: &[u8]) -> isize {
+    let reference = "etaoins";
+    let expected_percent = 58;
+
+    let mut correct = 0;
+    let mut other = 0;
+
+    data.iter().for_each(|c| {
+        if reference.contains(|r| r == *c as char) {
+            correct += 1;
+        } else {
+            other += 1;
+        }
+    });
+
+    let measured_percent: isize = 100 * correct / (correct + other);
+    (expected_percent - measured_percent).abs()
+}
+#[test]
+fn english_frequency_score_works() {
+    let text = "Man is distinguished, not only by his reason, but by this singular passion from other animals,
+which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable 
+generation of knowledge, exceeds the short vehemence of any carnal pleasure.";
+    let frequency_delta = english_frequency_score(text.to_string().as_bytes());
+    assert_eq!(frequency_delta, 10);
+
+    let text = "estonia";
+    let frequency_delta = english_frequency_score(text.to_string().as_bytes());
+    assert_eq!(frequency_delta, 42);
+}
+
+pub fn find_xor_key_eng(data: &[u8], key_len: usize) -> (u8, Vec<u8>) {
+    let mut best = (0xff, vec![]);
+    for b in 0..=255u8 {
+        let decrypted = xor_arrays(data, &vec![b]);
+        let score = english_frequency_score(&decrypted) as u8;
+        if score < best.0 {
+            best = (score, decrypted);
+        }
+    }
+    best
+}
+#[test]
+fn find_xor_key_eng_works() {
+    let text = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
+    let as_bytes = hex_to_bytes(text);
+    let (delta, output) = find_xor_key_eng(&as_bytes, 1);
+    let output = String::from_utf8(output).unwrap();
+    assert_eq!(delta, 17);
+    assert_eq!(output, "Cooking MC's like a pound of bacon");
+}
