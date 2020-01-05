@@ -171,25 +171,25 @@ pub fn english_frequency_score(data: &[u8]) -> isize {
 fn english_frequency_score_works() {
     let text = "snniiiooooaaaaatttttteeeeeee ";
     let frequency_delta = english_frequency_score(text.to_string().as_bytes());
-    assert_eq!(frequency_delta, 21);
+    assert_eq!(frequency_delta, -24);
 
     let text = "Man is distinguished, not only by his reason, but by this singular passion from other animals,
 which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable 
 generation of knowledge, exceeds the short vehemence of any carnal pleasure.";
     let frequency_delta = english_frequency_score(text.to_string().as_bytes());
-    assert_eq!(frequency_delta, 173);
+    assert_eq!(frequency_delta, 74);
 
     let text = "esto ia";
     let frequency_delta = english_frequency_score(text.to_string().as_bytes());
-    assert_eq!(frequency_delta, -2);
+    assert_eq!(frequency_delta, 5);
 
     let text = "estonia hhhhrrrfffmmmlll";
     let frequency_delta = english_frequency_score(text.to_string().as_bytes());
-    assert_eq!(frequency_delta, 0);
+    assert_eq!(frequency_delta, -28);
 
     let text = "We have students from different countries and continents gathered here to learn our language with you. At Totally English, you will make international friends and live fantastic learning adventures in the United Kingdom. Together, you will become more proficient in all areas of our language. Being fluent in English has become indispensable in the business area, so take your chance now and improve your skills with Totally English! Be more competitive in your job and see doors open left and right for you. English is the key!We have students from different countries and continents gathered here to learn our language with you. At Totally English, you will make international friends and live fantastic learning adventures in the United Kingdom. Together, you will become more proficient in all areas of our language. Being fluent in English has become indispensable in the business area, so take your chance now and improve your skills with Totally English! Be more competitive in your job and see doors open left and right for you. English is the key!";
     let frequency_delta = english_frequency_score(text.to_string().as_bytes());
-    assert_eq!(frequency_delta, 693);
+    assert_eq!(frequency_delta, 258);
 }
 
 pub fn find_xor_key_eng(data: &[u8], key_len: usize) -> (isize, u8, Vec<u8>) {
