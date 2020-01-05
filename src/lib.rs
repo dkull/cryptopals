@@ -2,6 +2,7 @@ use std::io::{self, Read};
 
 pub fn load_stdin() -> String {
     let mut buffer = String::new();
+    println!("reading from stdin...");
     io::stdin().lock().read_to_string(&mut buffer).unwrap();
     buffer
 }
@@ -137,43 +138,67 @@ fn xor_arrays_works() {
 }
 
 pub fn english_frequency_score(data: &[u8]) -> isize {
+    use std::collections::HashMap;
+
     let reference = "etaoins";
     let expected_percent = 58;
 
-    let mut correct = 0;
-    let mut other = 0;
+    let mut score = 0;
+    data.to_vec().windows(3).for_each(|triplet| {
+        let a = triplet[0];
+        let b = triplet[1];
+        let c = triplet[2];
 
-    data.iter().for_each(|c| {
-        if reference.contains(|r| r == *c as char) {
-            correct += 1;
+        if (a == b) {
+            score -= 1;
+        }
+        if (a == b) && (b == c) {
+            score -= 2;
+        }
+        if a != b && b != c && b == (' ' as u8) {
+            score += 2;
+        }
+        if reference.contains(|r| r == (a as char)) {
+            score += 1;
         } else {
-            other += 1;
+            score -= 1;
         }
     });
-
-    let measured_percent: isize = 100 * correct / (correct + other);
-    (expected_percent - measured_percent).abs()
+    score
 }
+
 #[test]
 fn english_frequency_score_works() {
+    let text = "snniiiooooaaaaatttttteeeeeee ";
+    let frequency_delta = english_frequency_score(text.to_string().as_bytes());
+    assert_eq!(frequency_delta, 21);
+
     let text = "Man is distinguished, not only by his reason, but by this singular passion from other animals,
 which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable 
 generation of knowledge, exceeds the short vehemence of any carnal pleasure.";
     let frequency_delta = english_frequency_score(text.to_string().as_bytes());
-    assert_eq!(frequency_delta, 10);
+    assert_eq!(frequency_delta, 173);
 
-    let text = "estonia";
+    let text = "esto ia";
     let frequency_delta = english_frequency_score(text.to_string().as_bytes());
-    assert_eq!(frequency_delta, 42);
+    assert_eq!(frequency_delta, -2);
+
+    let text = "estonia hhhhrrrfffmmmlll";
+    let frequency_delta = english_frequency_score(text.to_string().as_bytes());
+    assert_eq!(frequency_delta, 0);
+
+    let text = "We have students from different countries and continents gathered here to learn our language with you. At Totally English, you will make international friends and live fantastic learning adventures in the United Kingdom. Together, you will become more proficient in all areas of our language. Being fluent in English has become indispensable in the business area, so take your chance now and improve your skills with Totally English! Be more competitive in your job and see doors open left and right for you. English is the key!We have students from different countries and continents gathered here to learn our language with you. At Totally English, you will make international friends and live fantastic learning adventures in the United Kingdom. Together, you will become more proficient in all areas of our language. Being fluent in English has become indispensable in the business area, so take your chance now and improve your skills with Totally English! Be more competitive in your job and see doors open left and right for you. English is the key!";
+    let frequency_delta = english_frequency_score(text.to_string().as_bytes());
+    assert_eq!(frequency_delta, 693);
 }
 
-pub fn find_xor_key_eng(data: &[u8], key_len: usize) -> (u8, Vec<u8>) {
-    let mut best = (0xff, vec![]);
-    for b in 0..=255u8 {
-        let decrypted = xor_arrays(data, &vec![b]);
-        let score = english_frequency_score(&decrypted) as u8;
-        if score < best.0 {
-            best = (score, decrypted);
+pub fn find_xor_key_eng(data: &[u8], key_len: usize) -> (isize, u8, Vec<u8>) {
+    let mut best = (-100, 0x00, vec![]);
+    for b in 1..=255u8 {
+        let decrypted = xor_arrays(data, &[b]);
+        let score = english_frequency_score(&decrypted);
+        if score > best.0 {
+            best = (score, b, decrypted);
         }
     }
     best
@@ -182,8 +207,8 @@ pub fn find_xor_key_eng(data: &[u8], key_len: usize) -> (u8, Vec<u8>) {
 fn find_xor_key_eng_works() {
     let text = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
     let as_bytes = hex_to_bytes(text);
-    let (delta, output) = find_xor_key_eng(&as_bytes, 1);
+    let (score, key, output) = find_xor_key_eng(&as_bytes, 1);
     let output = String::from_utf8(output).unwrap();
-    assert_eq!(delta, 17);
+    assert_eq!(key, 88);
     assert_eq!(output, "Cooking MC's like a pound of bacon");
 }
