@@ -1,5 +1,5 @@
-// reexport lib_aes for cryptopals crate users
-pub mod lib_aes;
+// reexport block_cipher stuff for cryptopals crate users
+pub mod block_ciphers;
 
 use std::io::{self, Read};
 

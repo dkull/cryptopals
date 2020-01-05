@@ -24,3 +24,7 @@ cargo run --release --bin decrypt_aes "YELLOW SUBMARINE" < res/s1c7.txt
 s1c8 (detect ecb mode from lines)
 ---
 cargo run --release --bin detect_ecb_mode < res/s1c8.txt
+
+s2c1 (pkcs7 padding)
+---
+created into block_ciphers.rs
