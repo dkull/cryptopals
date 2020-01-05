@@ -1,3 +1,4 @@
+use std::cmp::min;
 use std::io::{self, Read};
 
 pub fn load_stdin() -> String {
@@ -105,6 +106,67 @@ fn bytes_to_base64_works() {
         bytes_to_base64(&"any carnal pleasure.".bytes().collect::<Vec<_>>()),
         "YW55IGNhcm5hbCBwbGVhc3VyZS4="
     );
+}
+
+pub fn base64_to_bytes(data: &str) -> Vec<u8> {
+    let uppers = (b'A'..=b'Z').collect::<Vec<u8>>();
+    let lowers = (b'a'..=b'z').collect::<Vec<u8>>();
+    let numbers = (b'0'..=b'9').collect::<Vec<u8>>();
+    let extras = vec![b'+', b'/'];
+    let lookup = vec![uppers, lowers, numbers, extras].concat();
+
+    let mut output = vec![];
+
+    let mut filled_bits = 0;
+    let mut carry = 0;
+    for x in data.bytes() {
+        let bits = lookup.iter().position(|l| l == &x);
+        // skip newlines and such
+        let bits = match bits {
+            Some(b) => b,
+            None => continue,
+        } as u8;
+        let x = bits;
+        let empty_bits = 8 - filled_bits;
+        let usable_bits = min(6, 8 - filled_bits);
+
+        // take the bits we can insert
+        let mut bits = bits_from_byte(bits, 2, usable_bits);
+        // shift them into correct position for ORing
+        bits <<= empty_bits - usable_bits;
+
+        carry |= bits;
+        filled_bits += usable_bits;
+        // if we do not have a full byte assembled yet
+        if filled_bits < 8 {
+            continue;
+        }
+        output.push(carry as u8);
+
+        // clear existing data
+        carry = 0;
+        // fill data for next round
+        let from = 2 + usable_bits;
+        filled_bits = (8 - from) % 7;
+        if filled_bits > 0 {
+            carry = bits_from_byte(x, from, 8 - from);
+            carry <<= 8 - filled_bits;
+        }
+    }
+    output
+}
+
+#[test]
+pub fn base64_to_bytes_works() {
+    let result = base64_to_bytes("QQABAgNC//8=");
+    let reference = [b'A', 0x00, 0x01, 0x02, 0x03, b'B', 0xff, 0xff];
+    assert_eq!(result, reference);
+
+    let result = base64_to_bytes("sAAFlG0CAncq3weaDw==");
+    let reference = [
+        0xb0, 0x00, 0x05, 0x94, 0x6d, 0x02, 0x02, 0x77, 0x2a, 0xdf, 0x07, 0x9a, 0x0f,
+    ];
+    assert_eq!(result, reference);
 }
 
 pub fn bytes_to_hex(data: &[u8]) -> String {
