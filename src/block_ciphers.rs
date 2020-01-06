@@ -3,14 +3,22 @@ use crate::{hex_to_bytes, xor_arrays};
 use aes::Aes128;
 use std::collections::VecDeque;
 
+#[derive(PartialEq, Clone, Copy)]
 pub enum AESBlockMode {
     ECB,
     CBC,
 }
 
 // s2c9
-pub fn pkcs7_padding(data: &mut Vec<u8>, block_size: u8) {
-    let missing_bytes = block_size as usize % data.len();
+pub fn pkcs7_padding(data: &mut Vec<u8>, block_size: usize) {
+    let missing_bytes = (block_size - (data.len() % block_size)) % block_size;
+    println!(
+        "{} - ({} % {}) = {}",
+        block_size,
+        data.len(),
+        block_size,
+        missing_bytes
+    );
     (0..missing_bytes).for_each(|_| data.push(missing_bytes as u8));
 }
 #[test]
@@ -44,9 +52,13 @@ pub fn aes_encrypt(data: &[u8], key: &[u8], iv: Option<[u8; 16]>, mode: AESBlock
 
     let mut output = vec![];
     blocks.iter().fold(iv, |prev, block| {
+        let mut block = block.to_vec();
+        pkcs7_padding(&mut block, 16);
+
+        println!("{} {}", prev.len(), block.len());
         let block = match mode {
-            AESBlockMode::ECB => block.to_vec(),
-            AESBlockMode::CBC => xor_arrays(&prev, block),
+            AESBlockMode::ECB => block,
+            AESBlockMode::CBC => xor_arrays(&prev, &block),
         };
         let mut buffer = GenericArray::clone_from_slice(&block);
         cipher.encrypt_block(&mut buffer);
