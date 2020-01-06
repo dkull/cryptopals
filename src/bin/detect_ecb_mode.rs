@@ -1,7 +1,5 @@
 extern crate cryptopals;
 
-use std::env;
-
 const BLOCK_SIZE: usize = 16;
 
 fn main() {

@@ -279,7 +279,7 @@ pub fn find_xor_key_eng(data: &[u8]) -> (isize, u8, Vec<u8>) {
 fn find_xor_key_eng_works() {
     let text = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
     let as_bytes = hex_to_bytes(text);
-    let (score, key, output) = find_xor_key_eng(&as_bytes);
+    let (_score, key, output) = find_xor_key_eng(&as_bytes);
     let output = String::from_utf8(output).unwrap();
     assert_eq!(key, 88);
     assert_eq!(output, "Cooking MC's like a pound of bacon");
