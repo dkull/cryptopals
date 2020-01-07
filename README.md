@@ -32,3 +32,7 @@ created into block_ciphers.rs
 s2c10 (decrypt aes-cbc)
 ---
 cargo run --bin decrypt_aes_cbc "YELLOW SUBMARINE" < res/s2c10.txt
+
+s2c11 (cbs vs ecb oracle)
+---
+cargo run --bin oracle_cbc_ecb

@@ -3,7 +3,7 @@ use crate::{hex_to_bytes, xor_arrays};
 use aes::Aes128;
 use std::collections::VecDeque;
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum AESBlockMode {
     ECB,
     CBC,
