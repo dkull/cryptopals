@@ -36,3 +36,7 @@ cargo run --bin decrypt_aes_cbc "YELLOW SUBMARINE" < res/s2c10.txt
 s2c11 (cbs vs ecb oracle)
 ---
 cargo run --bin oracle_cbc_ecb
+
+s2c12 (byte-a-time ecb decrypt simple)
+---
+cargo run --release --bin break_ecb_byte_simple < res/s2c12.txt
