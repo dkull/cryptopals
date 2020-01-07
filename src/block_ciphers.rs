@@ -11,14 +11,7 @@ pub enum AESBlockMode {
 
 // s2c9
 pub fn pkcs7_padding(data: &mut Vec<u8>, block_size: usize) {
-    let missing_bytes = (block_size - (data.len() % block_size)) % block_size;
-    println!(
-        "{} - ({} % {}) = {}",
-        block_size,
-        data.len(),
-        block_size,
-        missing_bytes
-    );
+    let missing_bytes = block_size - (data.len() % block_size);
     (0..missing_bytes).for_each(|_| data.push(missing_bytes as u8));
 }
 #[test]
@@ -34,6 +27,14 @@ fn pkcs7_padding_works() {
     );
     pkcs7_padding(&mut case2.1, case2.2);
     assert_eq!(case2.0, case2.1);
+
+    let mut case3 = (vec![0x00, 0xff, 0x02, 0x02], vec![0x00, 0xff], 2);
+    pkcs7_padding(&mut case3.1, case3.2);
+    assert_eq!(case3.0, case3.1);
+
+    let mut case4 = (vec![0x00, 0xff, 0x01, 0x01], vec![0x00, 0xff, 0x01], 2);
+    pkcs7_padding(&mut case4.1, case4.2);
+    assert_eq!(case4.0, case4.1);
 }
 
 // s2c11
@@ -46,18 +47,17 @@ pub fn aes_encrypt(data: &[u8], key: &[u8], iv: Option<[u8; 16]>, mode: AESBlock
         None => [0u8; 16],
     };
 
+    let mut data = data.to_vec();
+    pkcs7_padding(&mut data, 16);
+
     let cipher = Aes128::new(GenericArray::from_slice(&key));
 
     let blocks = data.chunks(16).collect::<VecDeque<_>>();
 
     let mut output = vec![];
     blocks.iter().fold(iv, |prev, block| {
-        let mut block = block.to_vec();
-        pkcs7_padding(&mut block, 16);
-
-        println!("{} {}", prev.len(), block.len());
         let block = match mode {
-            AESBlockMode::ECB => block,
+            AESBlockMode::ECB => block.to_vec(),
             AESBlockMode::CBC => xor_arrays(&prev, &block),
         };
         let mut buffer = GenericArray::clone_from_slice(&block);
@@ -75,6 +75,7 @@ pub fn aes_encrypt(data: &[u8], key: &[u8], iv: Option<[u8; 16]>, mode: AESBlock
 #[test]
 fn aes_encrypt_works() {
     // NOTE: does not test block mode enough
+    // NOTE: we take 0..16 slice because our encrypt adds pkcs7 padding
     let data = hex_to_bytes("6bc1bee22e409f96e93d7e117393172a");
     let key = hex_to_bytes("2b7e151628aed2a6abf7158809cf4f3c");
     let iv = hex_to_bytes("000102030405060708090a0b0c0d0e0f");
@@ -85,10 +86,10 @@ fn aes_encrypt_works() {
     iv_real.copy_from_slice(&iv);
 
     let ct = aes_encrypt(&data, &key, Some(iv_real), AESBlockMode::CBC);
-    assert_eq!(ct, test_vector_cbc);
+    assert_eq!(ct[0..16].to_vec(), test_vector_cbc);
 
     let ct = aes_encrypt(&data, &key, Some(iv_real), AESBlockMode::ECB);
-    assert_eq!(ct, test_vector_ecb);
+    assert_eq!(ct[0..16].to_vec(), test_vector_ecb);
 }
 
 // s2c10 (+ s1c7 merged later)
@@ -120,7 +121,9 @@ pub fn aes_decrypt(data: &[u8], key: &[u8], iv: Option<[u8; 16]>, mode: AESBlock
         ct
     });
 
-    output.concat()
+    let output = output.concat();
+    let padding = output.last().expect("decrypt should produce something");
+    output[0..output.len() - (*padding as usize)].to_vec()
 }
 
 #[test]
