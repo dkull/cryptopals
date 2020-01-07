@@ -1,9 +1,6 @@
 extern crate cryptopals;
 
 use std::collections::VecDeque;
-use std::env;
-
-use rand::prelude::*;
 
 fn random_key(length: u8) -> Vec<u8> {
     (0..length)
@@ -73,7 +70,7 @@ fn main() {
     */
     eprintln!("(s2c11)");
     let data = [0u8; 16 * 3];
-    for i in 0..50 {
+    for _ in 0..50 {
         let (known_block_mode, oracle_guess) = cbc_ecb_oracle(&data);
         assert_eq!(known_block_mode, oracle_guess);
     }

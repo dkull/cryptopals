@@ -10,6 +10,12 @@ pub fn load_stdin() -> String {
     buffer
 }
 
+pub fn random_key(length: u8) -> Vec<u8> {
+    (0..length)
+        .map(|_| rand::random::<u8>())
+        .collect::<Vec<u8>>()
+}
+
 pub fn hex_to_bytes(data: &str) -> Vec<u8> {
     let numbers = (b'0'..=b'9').collect::<Vec<u8>>();
     let lowers = (b'a'..=b'f').collect::<Vec<u8>>();

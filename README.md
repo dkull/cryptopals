@@ -40,3 +40,7 @@ cargo run --bin oracle_cbc_ecb
 s2c12 (byte-a-time ecb decrypt simple)
 ---
 cargo run --release --bin break_ecb_byte_simple < res/s2c12.txt
+
+s2c13 (ecb cut and paste cookie)
+---
+cargo run --bin ecb_cut_and_paste

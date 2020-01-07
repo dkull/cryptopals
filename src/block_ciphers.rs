@@ -132,15 +132,16 @@ fn aes_decrypt_works() {
     let data = hex_to_bytes("6bc1bee22e409f96e93d7e117393172a");
     let key = hex_to_bytes("2b7e151628aed2a6abf7158809cf4f3c");
     let iv = hex_to_bytes("000102030405060708090a0b0c0d0e0f");
-    let test_vector_cbc = hex_to_bytes("7649abac8119b246cee98e9b12e9197d");
-    let test_vector_ecb = hex_to_bytes("3ad77bb40d7a3660a89ecaf32466ef97");
 
     let mut iv_real = [0u8; 16];
     iv_real.copy_from_slice(&iv);
 
-    let pt = aes_decrypt(&test_vector_cbc, &key, Some(iv_real), AESBlockMode::CBC);
+    let cbc_ct = aes_encrypt(&data, &key, Some(iv_real), AESBlockMode::CBC);
+    let ecb_ct = aes_encrypt(&data, &key, Some(iv_real), AESBlockMode::ECB);
+
+    let pt = aes_decrypt(&cbc_ct, &key, Some(iv_real), AESBlockMode::CBC);
     assert_eq!(pt, data);
 
-    let pt = aes_decrypt(&test_vector_ecb, &key, Some(iv_real), AESBlockMode::ECB);
+    let pt = aes_decrypt(&ecb_ct, &key, Some(iv_real), AESBlockMode::ECB);
     assert_eq!(pt, data);
 }

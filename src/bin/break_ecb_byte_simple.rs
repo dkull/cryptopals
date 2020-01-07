@@ -1,37 +1,28 @@
 extern crate cryptopals;
 
-fn random_key(length: u8) -> Vec<u8> {
-    (0..length)
-        .map(|_| rand::random::<u8>())
-        .collect::<Vec<u8>>()
-}
-
-fn encrypt(key: &[u8], data: &[u8]) -> Vec<u8> {
-    let block_mode = cryptopals::block_ciphers::AESBlockMode::ECB;
-    //println!("encrypting with key {} data {}", key.len(), data.len());
-    let ct = cryptopals::block_ciphers::aes_encrypt(&data, &key, None, block_mode);
-    // test sanity checking
-    let pt = cryptopals::block_ciphers::aes_decrypt(&ct, &key, None, block_mode);
-    assert_eq!(pt, data);
-    // end sanity check
-    ct
-}
+use cryptopals::block_ciphers::AESBlockMode;
 
 fn provably_ecb(block_size: usize) -> bool {
     let key = vec![0u8; block_size];
     let data = vec![0u8; block_size * 3];
-    let ct = encrypt(&key, &data);
+    println!(">> {} {}", key.len(), data.len());
+    let ct = cryptopals::block_ciphers::aes_encrypt(&data, &key, None, AESBlockMode::ECB);
     ct[16..32] == ct[32..48]
 }
 
 fn cbc_ecb_oracle(key: &[u8], data: &[u8], append: &[u8]) -> Vec<u8> {
-    encrypt(&key, &vec![data, append].concat())
+    cryptopals::block_ciphers::aes_encrypt(
+        &vec![data, append].concat(),
+        &key,
+        None,
+        AESBlockMode::ECB,
+    )
 }
 
 fn main() {
     eprintln!("(s2c12)");
     let append = cryptopals::base64_to_bytes(&cryptopals::load_stdin());
-    let static_key = random_key(16);
+    let static_key = cryptopals::random_key(16);
 
     // detecting a block size does not make sense
     let block_size = 16;
