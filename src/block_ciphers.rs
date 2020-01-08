@@ -37,6 +37,32 @@ fn pkcs7_padding_works() {
     assert_eq!(case4.0, case4.1);
 }
 
+pub fn pkcs7_padding_strip(data: &mut Vec<u8>) -> bool {
+    let padding = data[data.len() - 1];
+    let padding_start = data.len() - padding as usize;
+    for p in padding_start..data.len() {
+        if data[p] != padding {
+            return false;
+        }
+    }
+    for _ in 0..padding {
+        data.pop();
+    }
+    true
+}
+
+#[test]
+fn pkcs7_padding_strip_works() {
+    let mut data1 = vec![0x00, 0xff, 0x01, 0x00, 0xff, 0x01, 0x02, 0x02];
+    assert_eq!(pkcs7_padding_strip(&mut data1), true);
+    let mut data2 = vec![0x00, 0xff, 0x01, 0x00, 0xff, 0x01, 0x02, 0x02, 0x02];
+    assert_eq!(pkcs7_padding_strip(&mut data2), true);
+    let mut data3 = vec![0x00, 0xff, 0x01, 0x00, 0xff, 0x01, 0x02];
+    assert_eq!(pkcs7_padding_strip(&mut data3), false);
+    let mut data4 = vec![0x00, 0xff, 0x01, 0x00, 0xff, 0x01, 0x03];
+    assert_eq!(pkcs7_padding_strip(&mut data4), false);
+}
+
 // s2c11
 pub fn aes_encrypt(data: &[u8], key: &[u8], iv: Option<[u8; 16]>, mode: AESBlockMode) -> Vec<u8> {
     use aes::block_cipher_trait::generic_array::GenericArray;
@@ -121,9 +147,9 @@ pub fn aes_decrypt(data: &[u8], key: &[u8], iv: Option<[u8; 16]>, mode: AESBlock
         ct
     });
 
-    let output = output.concat();
-    let padding = output.last().expect("decrypt should produce something");
-    output[0..output.len() - (*padding as usize)].to_vec()
+    let mut output = output.concat();
+    pkcs7_padding_strip(&mut output);
+    output
 }
 
 #[test]
