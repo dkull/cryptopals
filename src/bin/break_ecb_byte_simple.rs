@@ -5,7 +5,6 @@ use cryptopals::block_ciphers::AESBlockMode;
 fn provably_ecb(block_size: usize) -> bool {
     let key = vec![0u8; block_size];
     let data = vec![0u8; block_size * 3];
-    println!(">> {} {}", key.len(), data.len());
     let ct = cryptopals::block_ciphers::aes_encrypt(&data, &key, None, AESBlockMode::ECB);
     ct[16..32] == ct[32..48]
 }
