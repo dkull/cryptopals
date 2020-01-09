@@ -49,3 +49,6 @@ s2c14 (byte-a-time ecb decrypt harder)
 ---
 cargo run --release --bin break_ecb_byte_harder < res/s2c12.txt
 
+s2c16 (cbc bitlipping attack)
+---
+cargo run --bin cbc_bitflipping
