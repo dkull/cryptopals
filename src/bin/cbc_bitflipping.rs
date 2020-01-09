@@ -27,20 +27,18 @@ fn check_admin(data: &[u8]) -> bool {
 fn main() {
     eprintln!("(s2c16)");
     // ascii code for '?'
-    let qm = 63;
+    let qm = '?' as u8;
     let input = "????????????";
     let target = "x;admin=true";
-    // i know my data offset, not going to bother forcefully finding it
+
     let mypos = 32;
     let prevpos = mypos - BS;
 
+    println!("giving as input: {}", input);
     let mut ct = create_ciphertext(input);
     (prevpos..=prevpos + input.len())
         .zip(target.bytes())
         .for_each(|(n, t)| ct[n] ^= qm ^ t);
-
-    let modify_bytes = &ct[prevpos..prevpos + input.len()];
-    println!("modifying bytes {:?}", modify_bytes);
 
     let result = check_admin(&ct);
     println!("success: {}", result);
