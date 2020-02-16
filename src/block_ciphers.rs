@@ -35,16 +35,32 @@ fn pkcs7_padding_works() {
     let mut case4 = (vec![0x00, 0xff, 0x01, 0x01], vec![0x00, 0xff, 0x01], 2);
     pkcs7_padding(&mut case4.1, case4.2);
     assert_eq!(case4.0, case4.1);
+
+    let mut case5 = (
+        vec![0x00, 0xff, 0x01, 0x01, 0x02, 0x02],
+        vec![0x00, 0xff, 0x01, 0x01],
+        2,
+    );
+    pkcs7_padding(&mut case5.1, case5.2);
+    assert_eq!(case5.0, case5.1);
 }
 
 pub fn pkcs7_padding_strip(data: &mut Vec<u8>) -> bool {
     let padding = data[data.len() - 1];
+    // padding can't be more than the whole msg size
+    if padding as usize > data.len() {
+        return false;
+    }
+    if padding == 0 {
+        return false;
+    }
     let padding_start = data.len() - padding as usize;
     for p in padding_start..data.len() {
         if data[p] != padding {
             return false;
         }
     }
+    //println!("DEBUG correct padding {}", padding);
     for _ in 0..padding {
         data.pop();
     }
@@ -148,7 +164,11 @@ pub fn aes_decrypt(data: &[u8], key: &[u8], iv: Option<[u8; 16]>, mode: AESBlock
     });
 
     let mut output = output.concat();
-    pkcs7_padding_strip(&mut output);
+    let good_padding = pkcs7_padding_strip(&mut output);
+    // this is ugly, but I do not want to change the interface currently
+    if !good_padding {
+        return vec![];
+    }
     output
 }
 

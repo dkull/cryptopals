@@ -95,7 +95,6 @@ fn attack(oracle: &Oracle, ct: &[u8]) -> Vec<u8> {
                     t
                 };
 
-                let orig_value = data[change_at];
                 data[change_at] = t;
                 let padding_ok = oracle.padding_ok(&data[0..BLOCK_SIZE * (i + 2)]);
                 if padding_ok {

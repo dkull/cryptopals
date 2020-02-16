@@ -52,3 +52,7 @@ cargo run --release --bin break_ecb_byte_harder < res/s2c12.txt
 s2c16 (cbc bitlipping attack)
 ---
 cargo run --bin cbc_bitflipping
+
+s3c17 (cbc padding oracle)
+---
+cargo run --bin cbc_padding_oracle < res/s3c17.txt
