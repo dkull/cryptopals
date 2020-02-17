@@ -192,7 +192,7 @@ pub fn bytes_to_hex_works() {
 }
 
 pub fn xor_arrays(a: &[u8], b: &[u8]) -> Vec<u8> {
-    assert!(a.len() >= b.len());
+    assert!(a.len() >= b.len(), format!("{} vs {}", a.len(), b.len()));
     a.to_vec()
         .iter()
         .zip(b.to_vec().iter().cycle())

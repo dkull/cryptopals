@@ -56,3 +56,7 @@ cargo run --bin cbc_bitflipping
 s3c17 (cbc padding oracle)
 ---
 cargo run --bin cbc_padding_oracle < res/s3c17.txt
+
+s3c18 (ctr mode)
+---
+created into block_ciphers.rs

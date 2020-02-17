@@ -1,4 +1,4 @@
-use crate::{hex_to_bytes, xor_arrays};
+use crate::{base64_to_bytes, bytes_to_base64, hex_to_bytes, xor_arrays};
 
 use aes::Aes128;
 use std::collections::VecDeque;
@@ -7,6 +7,16 @@ use std::collections::VecDeque;
 pub enum AESBlockMode {
     ECB,
     CBC,
+    CTR,
+}
+
+fn ctr_input(nonce: Option<[u8; 8]>, n: usize) -> [u8; 16] {
+    let nonce = if let Some(n) = nonce { n } else { [0u8; 8] };
+    let counter = &(n as u64).to_le_bytes();
+    let mut adjusted = [0u8; 16];
+    adjusted[0..8].copy_from_slice(&nonce);
+    adjusted[8..16].copy_from_slice(counter);
+    adjusted
 }
 
 // s2c9
@@ -90,20 +100,38 @@ pub fn aes_encrypt(data: &[u8], key: &[u8], iv: Option<[u8; 16]>, mode: AESBlock
     };
 
     let mut data = data.to_vec();
-    pkcs7_padding(&mut data, 16);
+    match mode {
+        AESBlockMode::ECB | AESBlockMode::CBC => {
+            pkcs7_padding(&mut data, 16);
+        }
+        _ => (),
+    }
 
     let cipher = Aes128::new(GenericArray::from_slice(&key));
 
     let blocks = data.chunks(16).collect::<VecDeque<_>>();
 
     let mut output = vec![];
-    blocks.iter().fold(iv, |prev, block| {
+    blocks.iter().enumerate().fold(iv, |prev, (i, block)| {
         let block = match mode {
             AESBlockMode::ECB => block.to_vec(),
             AESBlockMode::CBC => xor_arrays(&prev, &block),
+            AESBlockMode::CTR => block.to_vec(),
         };
-        let mut buffer = GenericArray::clone_from_slice(&block);
-        cipher.encrypt_block(&mut buffer);
+        // ctr decrypts the counter
+        let buffer = match mode {
+            AESBlockMode::CTR => {
+                let adjusted = ctr_input(None, i);
+                let mut buffer = GenericArray::clone_from_slice(&adjusted);
+                cipher.encrypt_block(&mut buffer);
+                xor_arrays(&buffer.to_vec(), &block).to_vec()
+            }
+            _ => {
+                let mut buffer = GenericArray::clone_from_slice(&block);
+                cipher.encrypt_block(&mut buffer);
+                buffer.to_vec()
+            }
+        };
 
         let mut ct = [0u8; 16];
         ct.copy_from_slice(buffer.as_slice());
@@ -111,7 +139,7 @@ pub fn aes_encrypt(data: &[u8], key: &[u8], iv: Option<[u8; 16]>, mode: AESBlock
         ct
     });
 
-    output.concat()
+    output.concat()[0..data.len()].to_vec()
 }
 
 #[test]
@@ -132,6 +160,14 @@ fn aes_encrypt_works() {
 
     let ct = aes_encrypt(&data, &key, Some(iv_real), AESBlockMode::ECB);
     assert_eq!(ct[0..16].to_vec(), test_vector_ecb);
+
+    // CTR test
+    let data_ctr =
+        base64_to_bytes("L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ==");
+    let ctr_answer = b"Yo, VIP Let's kick it Ice, Ice, baby Ice, Ice, baby ".to_vec();
+
+    let encrypted = aes_encrypt(&ctr_answer, b"YELLOW SUBMARINE", None, AESBlockMode::CTR);
+    assert_eq!(encrypted, data_ctr);
 }
 
 // s2c10 (+ s1c7 merged later)
@@ -149,25 +185,49 @@ pub fn aes_decrypt(data: &[u8], key: &[u8], iv: Option<[u8; 16]>, mode: AESBlock
     let blocks = data.chunks(16).collect::<VecDeque<_>>();
 
     let mut output = vec![];
-    blocks.iter().fold(iv, |prev, block| {
+    blocks.iter().enumerate().fold(iv, |prev, (i, block)| {
         let mut ct = [0u8; 16];
-        ct.copy_from_slice(block);
+        ct[0..block.len()].copy_from_slice(block);
 
-        let mut buffer = GenericArray::clone_from_slice(&block);
-        cipher.decrypt_block(&mut buffer);
+        // ctr decrypts the counter
+        let buffer = match mode {
+            AESBlockMode::CTR => {
+                let nonce = [0u8; 8];
+                let counter = &(i as u64).to_le_bytes();
+                let mut adjusted = [0u8; 16];
+                adjusted[0..8].copy_from_slice(&nonce);
+                adjusted[8..16].copy_from_slice(counter);
+                let mut buffer = GenericArray::clone_from_slice(&adjusted);
+                cipher.encrypt_block(&mut buffer);
+                buffer.to_vec()
+            }
+            _ => {
+                let mut buffer = GenericArray::clone_from_slice(&block);
+                cipher.decrypt_block(&mut buffer);
+                buffer.to_vec()
+            }
+        };
+
         let pt = match mode {
             AESBlockMode::ECB => buffer.as_slice().to_vec(),
             AESBlockMode::CBC => xor_arrays(&prev, buffer.as_slice()),
+            AESBlockMode::CTR => xor_arrays(&block, &buffer.as_slice()[0..block.len()]),
         };
         output.push(pt);
         ct
     });
 
     let mut output = output.concat();
-    let good_padding = pkcs7_padding_strip(&mut output);
-    // this is ugly, but I do not want to change the interface currently
-    if !good_padding {
-        return vec![];
+    match mode {
+        AESBlockMode::ECB | AESBlockMode::CBC => {
+            let good_padding = pkcs7_padding_strip(&mut output);
+            // this is ugly, but I do not want to change the interface currently
+            if !good_padding {
+                return vec![];
+            }
+            ()
+        }
+        _ => (),
     }
     output
 }
@@ -190,4 +250,11 @@ fn aes_decrypt_works() {
 
     let pt = aes_decrypt(&ecb_ct, &key, Some(iv_real), AESBlockMode::ECB);
     assert_eq!(pt, data);
+
+    // CTR test
+    let data_ctr =
+        base64_to_bytes("L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ==");
+    let ctr_answer = b"Yo, VIP Let's kick it Ice, Ice, baby Ice, Ice, baby ".to_vec();
+    let pt = aes_decrypt(&data_ctr, b"YELLOW SUBMARINE", None, AESBlockMode::CTR);
+    assert_eq!(pt.to_vec(), ctr_answer);
 }
