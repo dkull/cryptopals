@@ -55,8 +55,13 @@ cargo run --bin cbc_bitflipping
 
 s3c17 (cbc padding oracle)
 ---
+# FIXME: I do not decrypt the first block, add a virtual empty block before the first one?
 cargo run --bin cbc_padding_oracle < res/s3c17.txt
 
 s3c18 (ctr mode)
 ---
 created into block_ciphers.rs
+
+s3c19 (ctr break substitutions - dumb)
+---
+cargo run --bin break_ctr_dumb < res/s3c19.txt
