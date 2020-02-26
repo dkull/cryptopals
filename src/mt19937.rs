@@ -1,19 +1,15 @@
 //extern crate cryptopals;
 use std::num::Wrapping;
 
-const w: u32 = 32;
 const n: u32 = 624;
-const m: u32 = 397;
-const r: u32 = 31;
-const u: Wrapping<u32> = Wrapping(11);
 const f: Wrapping<u32> = Wrapping(1812433253);
 
-struct Mt19937 {
+pub struct Mt19937 {
     state: [Wrapping<u32>; n as usize],
     index: u32,
 }
 impl Mt19937 {
-    fn from_seed(seed: u32) -> Mt19937 {
+    pub fn from_seed(seed: u32) -> Mt19937 {
         let mut state = [Wrapping(0); n as usize];
         state[0] = Wrapping(seed);
         for i in 1..n as usize {
@@ -25,7 +21,7 @@ impl Mt19937 {
         }
     }
 
-    fn extract_number(&mut self) -> u32 {
+    pub fn extract_number(&mut self) -> u32 {
         if self.index >= n {
             self.twist();
         }
@@ -48,7 +44,7 @@ impl Mt19937 {
             if x % Wrapping(2) != Wrapping(0) {
                 x_a ^= Wrapping(0x9908_B0DF);
             }
-            self.state[i] = self.state[(i + m as usize) % n as usize] ^ x_a;
+            self.state[i] = self.state[(i + 397) % n as usize] ^ x_a;
         }
         self.index = 0;
     }

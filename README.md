@@ -73,3 +73,7 @@ cargo run --bin break_ctr_smart < res/s3c20.txt
 s3c21 (mt19937)
 ---
 implemented into lib under mt19937.rs
+
+s3c22 (mt19937 epoch seed crack)
+---
+cargo run --release --bin s3c22_mt19937_wait_crack
