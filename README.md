@@ -66,6 +66,10 @@ s3c19 (ctr break substitutions - dumb)
 ---
 cargo run --bin break_ctr_dumb < res/s3c19.txt
 
-s3c19 (ctr break sattistic - smart) actually same as previous
+s3c20 (ctr break sattistic - smart) actually same as previous
 ---
 cargo run --bin break_ctr_smart < res/s3c20.txt
+
+s3c21 (mt19937)
+---
+implemented into lib under mt19937.rs
