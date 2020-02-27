@@ -21,18 +21,46 @@ impl Mt19937 {
         }
     }
 
+    pub fn from_state(state: [Wrapping<u32>; n as usize], index: u32) -> Mt19937 {
+        Mt19937 { state, index }
+    }
+
     pub fn extract_number(&mut self) -> u32 {
         if self.index >= n {
             self.twist();
         }
         let mut y: u32 = self.state[self.index as usize].0;
-        y ^= y >> 11;
-        y ^= y << 7 & 0x9D2C_5680;
-        y ^= y << 15 & 0xEFC6_0000;
-        y ^= y >> 18;
-
+        y = self.temper(y);
         self.index += 1;
         y
+    }
+
+    fn temper(&self, num: u32) -> u32 {
+        let mut num = num ^ num >> 11;
+        num ^= num << 7 & 0x9D2C_5680;
+        num ^= num << 15 & 0xEFC6_0000;
+        num ^= num >> 18;
+        num
+    }
+
+    pub fn untemper(&self, num: u32) -> u32 {
+        let mut num = num ^ (num >> 18);
+
+        // num ^= num << 15 & 0xEFC6_0000
+        num ^= num << 15 & 0x2FC6_0000;
+        num ^= num << 15 & 0xC000_0000;
+
+        // num ^= num << 7 & 0x9D2C_5680
+        num ^= num << 7 & 0x0000_1680;
+        num ^= num << 7 & 0x000C_4000;
+        num ^= num << 7 & 0x0D20_0000;
+        num ^= num << 7 & 0x9000_0000;
+
+        // num ^= num >> 11
+        num ^= num >> 11;
+        num ^= num >> 22;
+
+        num
     }
 
     fn twist(&mut self) {
@@ -86,4 +114,11 @@ fn test_mt19937() {
             assert_eq!(out_num, *verification_num);
         }
     }
+
+    // test tempering
+    let tempered_1 = mt.temper(42);
+    assert_eq!(42, mt.untemper(tempered_1));
+
+    let tempered_2 = mt.temper(0xff112233);
+    assert_eq!(0xff112233, mt.untemper(tempered_2));
 }

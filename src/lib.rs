@@ -3,6 +3,13 @@ pub mod block_ciphers;
 pub mod mt19937;
 
 use std::io::{self, Read};
+use std::time::{SystemTime, UNIX_EPOCH};
+
+pub fn get_timestamp() -> std::time::Duration {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("timetamp is broken")
+}
 
 pub fn load_stdin() -> String {
     let mut buffer = String::new();

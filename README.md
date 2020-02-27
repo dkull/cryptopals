@@ -77,3 +77,7 @@ implemented into lib under mt19937.rs
 s3c22 (mt19937 epoch seed crack)
 ---
 cargo run --release --bin s3c22_mt19937_wait_crack
+
+s3c23 (mt19937 clone from output)
+---
+cargo run --release --bin s3c23_clone_mt19937
