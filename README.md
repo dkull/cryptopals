@@ -81,3 +81,7 @@ cargo run --release --bin s3c22_mt19937_wait_crack
 s3c23 (mt19937 clone from output)
 ---
 cargo run --release --bin s3c23_clone_mt19937
+
+s3c24 (mt19937 stream cipher + crack)
+---
+`cargo run --release --bin s3c24_mt19937_cipher`
