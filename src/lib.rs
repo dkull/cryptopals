@@ -1,6 +1,7 @@
 // reexport block_cipher stuff for cryptopals crate users
 pub mod block_ciphers;
 pub mod mt19937;
+pub mod sha1;
 
 use std::io::{self, Read};
 use std::time::{SystemTime, UNIX_EPOCH};
