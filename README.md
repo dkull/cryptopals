@@ -85,3 +85,7 @@ cargo run --release --bin s3c23_clone_mt19937
 s3c24 (mt19937 stream cipher + crack)
 ---
 `cargo run --release --bin s3c24_mt19937_cipher`
+
+s4c25 (aes_ctr_random_rw_break)
+---
+`cargo run --release --bin s4c25_aes_ctr_random_rw_break < res/s4c25.txt`
