@@ -1,32 +1,32 @@
 //extern crate cryptopals;
 use std::num::Wrapping;
 
-const n: u32 = 624;
-const f: Wrapping<u32> = Wrapping(1812433253);
+const N: u32 = 624;
+const F: Wrapping<u32> = Wrapping(1812433253);
 
 pub struct Mt19937 {
-    state: [Wrapping<u32>; n as usize],
+    state: [Wrapping<u32>; N as usize],
     index: u32,
 }
 impl Mt19937 {
     pub fn from_seed(seed: u32) -> Mt19937 {
-        let mut state = [Wrapping(0); n as usize];
+        let mut state = [Wrapping(0); N as usize];
         state[0] = Wrapping(seed);
-        for i in 1..n as usize {
-            state[i] = f * (state[i - 1] ^ (state[i - 1] >> 30)) + Wrapping(i as u32);
+        for i in 1..N as usize {
+            state[i] = F * (state[i - 1] ^ (state[i - 1] >> 30)) + Wrapping(i as u32);
         }
         Mt19937 {
             state,
-            index: n as u32,
+            index: N as u32,
         }
     }
 
-    pub fn from_state(state: [Wrapping<u32>; n as usize], index: u32) -> Mt19937 {
+    pub fn from_state(state: [Wrapping<u32>; N as usize], index: u32) -> Mt19937 {
         Mt19937 { state, index }
     }
 
     pub fn extract_number(&mut self) -> u32 {
-        if self.index >= n {
+        if self.index >= N {
             self.twist();
         }
         let mut y: u32 = self.state[self.index as usize].0;
@@ -66,13 +66,13 @@ impl Mt19937 {
     fn twist(&mut self) {
         let upper_mask: Wrapping<u32> = Wrapping(0x8000_0000);
         let lower_mask: Wrapping<u32> = Wrapping(0x7fff_ffff);
-        for i in 0..n as usize {
-            let x = (self.state[i] & upper_mask) + (self.state[(i + 1) % n as usize] & lower_mask);
+        for i in 0..N as usize {
+            let x = (self.state[i] & upper_mask) + (self.state[(i + 1) % N as usize] & lower_mask);
             let mut x_a: Wrapping<u32> = x >> 1;
             if x % Wrapping(2) != Wrapping(0) {
                 x_a ^= Wrapping(0x9908_B0DF);
             }
-            self.state[i] = self.state[(i + 397) % n as usize] ^ x_a;
+            self.state[i] = self.state[(i + 397) % N as usize] ^ x_a;
         }
         self.index = 0;
     }

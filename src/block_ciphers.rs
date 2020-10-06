@@ -1,4 +1,4 @@
-use crate::{base64_to_bytes, bytes_to_base64, hex_to_bytes, xor_arrays};
+use crate::xor_arrays;
 
 use aes::Aes128;
 use std::collections::VecDeque;
