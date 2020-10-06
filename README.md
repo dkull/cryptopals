@@ -89,3 +89,7 @@ s3c24 (mt19937 stream cipher + crack)
 s4c25 (aes_ctr_random_rw_break)
 ---
 `cargo run --release --bin s4c25_aes_ctr_random_rw_break < res/s4c25.txt`
+
+s4c26
+---
+`cargo run --release --bin s4c26_ctr_bitflipping`
