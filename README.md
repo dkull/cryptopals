@@ -93,3 +93,8 @@ s4c25 (aes_ctr_random_rw_break)
 s4c26
 ---
 `cargo run --release --bin s4c26_ctr_bitflipping`
+
+s4c27
+---
+`cargo run --release --bin s4c27_cbc_break_key_as_iv`
+
