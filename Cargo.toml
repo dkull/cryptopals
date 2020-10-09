@@ -13,4 +13,25 @@ edition = "2018"
 [dependencies]
 aes = "0.3.2"
 rand = "0.7.2"
+# SHA1
 byteorder = "1.3.4"
+
+# Following all MD4
+[dependencies.block-buffer]
+version = "0.9"
+
+[dependencies.digest]
+version = "0.9"
+
+[dependencies.opaque-debug]
+version = "0.3"
+[dev-dependencies.digest]
+features = ["dev"]
+version = "0.9"
+
+[dev-dependencies.hex-literal]
+version = "0.2"
+
+[features]
+default = ["std"]
+std = ["digest/std"]

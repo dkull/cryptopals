@@ -1,5 +1,6 @@
 // reexport block_cipher stuff for cryptopals crate users
 pub mod block_ciphers;
+pub mod md4;
 pub mod mt19937;
 pub mod sha1;
 
