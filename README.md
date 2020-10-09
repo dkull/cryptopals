@@ -98,3 +98,7 @@ s4c27
 ---
 `cargo run --release --bin s4c27_cbc_break_key_as_iv`
 
+s4c29
+---
+I created a new method "new_with_state" in sha1.rs
+`cargo run --release --bin s4c29_sha1_keyed_mac_break`

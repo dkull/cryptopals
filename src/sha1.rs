@@ -96,9 +96,9 @@ struct Blocks {
     block: [u8; 64],
 }
 
-#[derive(Copy, Clone, PartialOrd, Ord, PartialEq, Eq, Hash, Default)]
-struct Sha1State {
-    state: [u32; 5],
+#[derive(Copy, Clone, PartialOrd, Ord, PartialEq, Eq, Hash, Default, Debug)]
+pub struct Sha1State {
+    pub state: [u32; 5],
 }
 
 /// Digest generated from a `Sha1` instance.
@@ -113,7 +113,7 @@ struct Sha1State {
 /// deserialized.  Likewise a digest can be parsed from a hex string.
 #[derive(PartialOrd, Ord, PartialEq, Eq, Hash, Clone, Copy, Default)]
 pub struct Digest {
-    data: Sha1State,
+    pub data: Sha1State,
 }
 
 const DEFAULT_STATE: Sha1State = Sha1State {
@@ -143,6 +143,19 @@ impl Sha1 {
         Sha1 {
             state: DEFAULT_STATE,
             len: 0,
+            blocks: Blocks {
+                len: 0,
+                block: [0; 64],
+            },
+        }
+    }
+
+    pub fn new_with_state(state: &[u32; 5], len: u64) -> Sha1 {
+        Sha1 {
+            state: Sha1State {
+                state: state.clone(),
+            },
+            len: len,
             blocks: Blocks {
                 len: 0,
                 block: [0; 64],
@@ -198,6 +211,8 @@ impl Sha1 {
 
         if blocklen < 56 {
             last[56..64].clone_from_slice(&extra);
+            let out = last[0..64].to_vec();
+            //println!("INNER digest used as last block: {:?}", out);
             state.process(as_block(&last[0..64]));
         } else {
             last[120..128].clone_from_slice(&extra);
