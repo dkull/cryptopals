@@ -1,214 +1,212 @@
-/*
-Copyright (c) 2016 bacher09, Artyom Pavlov
+//
+// Copied from https://rosettacode.org/wiki/MD4#Rust
+//
+// MD4, based on RFC 1186 and RFC 1320.
+//
+// https://www.ietf.org/rfc/rfc1186.txt
+// https://tools.ietf.org/html/rfc1320
+//
 
-Permission is hereby granted, free of charge, to any
-person obtaining a copy of this software and associated
-documentation files (the "Software"), to deal in the
-Software without restriction, including without
-limitation the rights to use, copy, modify, merge,
-publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software
-is furnished to do so, subject to the following
-conditions:
+use std::fmt::Write;
+use std::mem;
 
-The above copyright notice and this permission notice
-shall be included in all copies or substantial portions
-of the Software.
+// Let not(X) denote the bit-wise complement of X.
+// Let X v Y denote the bit-wise OR of X and Y.
+// Let X xor Y denote the bit-wise XOR of X and Y.
+// Let XY denote the bit-wise AND of X and Y.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
-ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
-IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-*/
-//! An implementation of the [MD4][1] cryptographic hash algorithm.
-//!
-//! # Usage
-//!
-//! ```rust
-//! use md4::{Md4, Digest};
-//! use hex_literal::hex;
-//!
-//! // create a Md4 hasher instance
-//! let mut hasher = Md4::new();
-//!
-//! // process input message
-//! hasher.update(b"hello world");
-//!
-//! // acquire hash digest in the form of GenericArray,
-//! // which in this case is equivalent to [u8; 16]
-//! let result = hasher.finalize();
-//! assert_eq!(result[..], hex!("aa010fbc1d14c795d86ef98c95479d17"));
-//! ```
-//!
-//! Also see [RustCrypto/hashes][2] readme.
-//!
-//! [1]: https://en.wikipedia.org/wiki/MD4
-//! [2]: https://github.com/RustCrypto/hashes
-
-#![no_std]
-#![doc(html_logo_url = "https://raw.githubusercontent.com/RustCrypto/meta/master/logo_small.png")]
-#![deny(unsafe_code)]
-#![warn(rust_2018_idioms)]
-#![allow(clippy::many_single_char_names)]
-
-#[cfg(feature = "std")]
-extern crate std;
-
-use core::convert::TryInto;
-pub use digest::{self, Digest};
-
-use block_buffer::BlockBuffer;
-use digest::{
-    consts::{U16, U64},
-    generic_array::GenericArray,
-};
-use digest::{BlockInput, FixedOutputDirty, Reset, Update};
-
-// initial values for Md4State
-const S: [u32; 4] = [0x6745_2301, 0xEFCD_AB89, 0x98BA_DCFE, 0x1032_5476];
-
-type Block = GenericArray<u8, U64>;
-
-#[derive(Copy, Clone)]
-struct Md4State {
-    s: [u32; 4],
+// f(X,Y,Z)  =  XY v not(X)Z
+fn f(x: u32, y: u32, z: u32) -> u32 {
+    (x & y) | (!x & z)
 }
 
-/// The MD4 hasher
-#[derive(Clone, Default)]
-pub struct Md4 {
-    length_bytes: u64,
-    buffer: BlockBuffer<U64>,
-    state: Md4State,
+// g(X,Y,Z)  =  XY v XZ v YZ
+fn g(x: u32, y: u32, z: u32) -> u32 {
+    (x & y) | (x & z) | (y & z)
 }
 
-impl Md4State {
-    fn process_block(&mut self, input: &Block) {
-        fn f(x: u32, y: u32, z: u32) -> u32 {
-            (x & y) | (!x & z)
-        }
+// h(X,Y,Z)  =  X xor Y xor Z
+fn h(x: u32, y: u32, z: u32) -> u32 {
+    x ^ y ^ z
+}
 
-        fn g(x: u32, y: u32, z: u32) -> u32 {
-            (x & y) | (x & z) | (y & z)
-        }
+// Round 1 macro
+// Let [A B C D i s] denote the operation
+//   A = (A + f(B,C,D) + X[i]) <<< s
+macro_rules! md4round1 {
+    ( $a:expr, $b:expr, $c:expr, $d:expr, $i:expr, $s:expr, $x:expr) => {{
+        // Rust defaults to non-overflowing arithmetic, so we need to specify wrapping add.
+        $a = ($a.wrapping_add(f($b, $c, $d)).wrapping_add($x[$i])).rotate_left($s);
+    }};
+}
 
-        fn h(x: u32, y: u32, z: u32) -> u32 {
-            x ^ y ^ z
-        }
+// Round 2 macro
+// Let [A B C D i s] denote the operation
+//   A = (A + g(B,C,D) + X[i] + 5A827999) <<< s .
+macro_rules! md4round2 {
+    ( $a:expr, $b:expr, $c:expr, $d:expr, $i:expr, $s:expr, $x:expr) => {{
+        $a = ($a
+            .wrapping_add(g($b, $c, $d))
+            .wrapping_add($x[$i])
+            .wrapping_add(0x5a827999_u32))
+        .rotate_left($s);
+    }};
+}
 
-        fn op1(a: u32, b: u32, c: u32, d: u32, k: u32, s: u32) -> u32 {
-            a.wrapping_add(f(b, c, d)).wrapping_add(k).rotate_left(s)
-        }
+// Round 3 macro
+// Let [A B C D i s] denote the operation
+//   A = (A + h(B,C,D) + X[i] + 6ED9EBA1) <<< s .
+macro_rules! md4round3 {
+    ( $a:expr, $b:expr, $c:expr, $d:expr, $i:expr, $s:expr, $x:expr) => {{
+        $a = ($a
+            .wrapping_add(h($b, $c, $d))
+            .wrapping_add($x[$i])
+            .wrapping_add(0x6ed9eba1_u32))
+        .rotate_left($s);
+    }};
+}
 
-        fn op2(a: u32, b: u32, c: u32, d: u32, k: u32, s: u32) -> u32 {
-            a.wrapping_add(g(b, c, d))
-                .wrapping_add(k)
-                .wrapping_add(0x5A82_7999)
-                .rotate_left(s)
-        }
-
-        fn op3(a: u32, b: u32, c: u32, d: u32, k: u32, s: u32) -> u32 {
-            a.wrapping_add(h(b, c, d))
-                .wrapping_add(k)
-                .wrapping_add(0x6ED9_EBA1)
-                .rotate_left(s)
-        }
-
-        let mut a = self.s[0];
-        let mut b = self.s[1];
-        let mut c = self.s[2];
-        let mut d = self.s[3];
-
-        // load block to data
-        let mut data = [0u32; 16];
-        for (o, chunk) in data.iter_mut().zip(input.chunks_exact(4)) {
-            *o = u32::from_le_bytes(chunk.try_into().unwrap());
-        }
-
-        // round 1
-        for &i in &[0, 4, 8, 12] {
-            a = op1(a, b, c, d, data[i], 3);
-            d = op1(d, a, b, c, data[i + 1], 7);
-            c = op1(c, d, a, b, data[i + 2], 11);
-            b = op1(b, c, d, a, data[i + 3], 19);
-        }
-
-        // round 2
-        for i in 0..4 {
-            a = op2(a, b, c, d, data[i], 3);
-            d = op2(d, a, b, c, data[i + 4], 5);
-            c = op2(c, d, a, b, data[i + 8], 9);
-            b = op2(b, c, d, a, data[i + 12], 13);
-        }
-
-        // round 3
-        for &i in &[0, 2, 1, 3] {
-            a = op3(a, b, c, d, data[i], 3);
-            d = op3(d, a, b, c, data[i + 8], 9);
-            c = op3(c, d, a, b, data[i + 4], 11);
-            b = op3(b, c, d, a, data[i + 12], 15);
-        }
-
-        self.s[0] = self.s[0].wrapping_add(a);
-        self.s[1] = self.s[1].wrapping_add(b);
-        self.s[2] = self.s[2].wrapping_add(c);
-        self.s[3] = self.s[3].wrapping_add(d);
+fn convert_byte_vec_to_u32(mut bytes: Vec<u8>) -> Vec<u32> {
+    bytes.shrink_to_fit();
+    let num_bytes = bytes.len();
+    let num_words = num_bytes / 4;
+    unsafe {
+        let words = Vec::from_raw_parts(bytes.as_mut_ptr() as *mut u32, num_words, num_words);
+        mem::forget(bytes);
+        words
     }
 }
 
-impl Default for Md4State {
-    fn default() -> Self {
-        Md4State { s: S }
+// Returns a 128-bit MD4 hash as an array of four 32-bit words.
+// Based on RFC 1186 from https://www.ietf.org/rfc/rfc1186.txt
+pub fn md4<T: Into<Vec<u8>>>(
+    input: T,
+    existing_len: u64,
+    inner_state: Option<&[u32; 4]>,
+) -> [u32; 4] {
+    let mut bytes = input.into().to_vec();
+    let orig_bytes_len = bytes.len();
+    let initial_bit_len = ((existing_len << 3) + (bytes.len() << 3) as u64) as u64;
+
+    // Step 1. Append padding bits
+    // Append one '1' bit, then append 0 ≤ k < 512 bits '0', such that the resulting message
+    // length in bis is congruent to 448 (mod 512).
+    // Since our message is in bytes, we use one byte with a set high-order bit (0x80) plus
+    // a variable number of zero bytes.
+
+    // Append zeros
+    // Number of padding bytes needed is 448 bits (56 bytes) modulo 512 bits (64 bytes)
+    bytes.push(0x80_u8);
+    while (bytes.len() % 64) != 56 {
+        bytes.push(0_u8);
     }
-}
 
-impl Md4 {
-    fn finalize_inner(&mut self) {
-        let state = &mut self.state;
-        let l = (self.length_bytes << 3) as u64;
-        self.buffer.len64_padding_le(l, |d| state.process_block(d))
+    // Everything after this operates on 32-bit words, so reinterpret the buffer.
+    let mut w = convert_byte_vec_to_u32(bytes.clone());
+
+    // Step 2. Append length
+    // A 64-bit representation of b (the length of the message before the padding bits were added)
+    // is appended to the result of the previous step, low-order bytes first.
+    w.push(initial_bit_len as u32); // Push low-order bytes first
+    w.push((initial_bit_len >> 32) as u32);
+
+    // Step 3. Initialize MD buffer
+    let (mut a, mut b, mut c, mut d) = match inner_state {
+        Some(is) => (is[0], is[1], is[2], is[3]),
+        None => (
+            0x67452301_u32,
+            0xefcdab89_u32,
+            0x98badcfe_u32,
+            0x10325476_u32,
+        ),
+    };
+
+    // Step 4. Process message in 16-word blocks
+    let n = w.len();
+    for i in 0..n / 16 {
+        // Select the next 512-bit (16-word) block to process.
+        let x = &w[i * 16..i * 16 + 16];
+
+        let aa = a;
+        let bb = b;
+        let cc = c;
+        let dd = d;
+
+        // [Round 1]
+        md4round1!(a, b, c, d, 0, 3, x); // [A B C D 0 3]
+        md4round1!(d, a, b, c, 1, 7, x); // [D A B C 1 7]
+        md4round1!(c, d, a, b, 2, 11, x); // [C D A B 2 11]
+        md4round1!(b, c, d, a, 3, 19, x); // [B C D A 3 19]
+        md4round1!(a, b, c, d, 4, 3, x); // [A B C D 4 3]
+        md4round1!(d, a, b, c, 5, 7, x); // [D A B C 5 7]
+        md4round1!(c, d, a, b, 6, 11, x); // [C D A B 6 11]
+        md4round1!(b, c, d, a, 7, 19, x); // [B C D A 7 19]
+        md4round1!(a, b, c, d, 8, 3, x); // [A B C D 8 3]
+        md4round1!(d, a, b, c, 9, 7, x); // [D A B C 9 7]
+        md4round1!(c, d, a, b, 10, 11, x); // [C D A B 10 11]
+        md4round1!(b, c, d, a, 11, 19, x); // [B C D A 11 19]
+        md4round1!(a, b, c, d, 12, 3, x); // [A B C D 12 3]
+        md4round1!(d, a, b, c, 13, 7, x); // [D A B C 13 7]
+        md4round1!(c, d, a, b, 14, 11, x); // [C D A B 14 11]
+        md4round1!(b, c, d, a, 15, 19, x); // [B C D A 15 19]
+
+        // [Round 2]
+        md4round2!(a, b, c, d, 0, 3, x); //[A B C D 0  3]
+        md4round2!(d, a, b, c, 4, 5, x); //[D A B C 4  5]
+        md4round2!(c, d, a, b, 8, 9, x); //[C D A B 8  9]
+        md4round2!(b, c, d, a, 12, 13, x); //[B C D A 12 13]
+        md4round2!(a, b, c, d, 1, 3, x); //[A B C D 1  3]
+        md4round2!(d, a, b, c, 5, 5, x); //[D A B C 5  5]
+        md4round2!(c, d, a, b, 9, 9, x); //[C D A B 9  9]
+        md4round2!(b, c, d, a, 13, 13, x); //[B C D A 13 13]
+        md4round2!(a, b, c, d, 2, 3, x); //[A B C D 2  3]
+        md4round2!(d, a, b, c, 6, 5, x); //[D A B C 6  5]
+        md4round2!(c, d, a, b, 10, 9, x); //[C D A B 10 9]
+        md4round2!(b, c, d, a, 14, 13, x); //[B C D A 14 13]
+        md4round2!(a, b, c, d, 3, 3, x); //[A B C D 3  3]
+        md4round2!(d, a, b, c, 7, 5, x); //[D A B C 7  5]
+        md4round2!(c, d, a, b, 11, 9, x); //[C D A B 11 9]
+        md4round2!(b, c, d, a, 15, 13, x); //[B C D A 15 13]
+
+        // [Round 3]
+        md4round3!(a, b, c, d, 0, 3, x); //[A B C D 0  3]
+        md4round3!(d, a, b, c, 8, 9, x); //[D A B C 8  9]
+        md4round3!(c, d, a, b, 4, 11, x); //[C D A B 4  11]
+        md4round3!(b, c, d, a, 12, 15, x); //[B C D A 12 15]
+        md4round3!(a, b, c, d, 2, 3, x); //[A B C D 2  3]
+        md4round3!(d, a, b, c, 10, 9, x); //[D A B C 10 9]
+        md4round3!(c, d, a, b, 6, 11, x); //[C D A B 6  11]
+        md4round3!(b, c, d, a, 14, 15, x); //[B C D A 14 15]
+        md4round3!(a, b, c, d, 1, 3, x); //[A B C D 1  3]
+        md4round3!(d, a, b, c, 9, 9, x); //[D A B C 9  9]
+        md4round3!(c, d, a, b, 5, 11, x); //[C D A B 5  11]
+        md4round3!(b, c, d, a, 13, 15, x); //[B C D A 13 15]
+        md4round3!(a, b, c, d, 3, 3, x); //[A B C D 3  3]
+        md4round3!(d, a, b, c, 11, 9, x); //[D A B C 11 9]
+        md4round3!(c, d, a, b, 7, 11, x); //[C D A B 7  11]
+        md4round3!(b, c, d, a, 15, 15, x); //[B C D A 15 15]
+
+        a = a.wrapping_add(aa);
+        b = b.wrapping_add(bb);
+        c = c.wrapping_add(cc);
+        d = d.wrapping_add(dd);
     }
+
+    // Step 5. Output
+    // The message digest produced as output is A, B, C, D. That is, we begin with the low-order
+    // byte of A, and end with the high-order byte of D.
+    [
+        u32::from_be(a),
+        u32::from_be(b),
+        u32::from_be(c),
+        u32::from_be(d),
+    ]
 }
 
-impl BlockInput for Md4 {
-    type BlockSize = U64;
-}
-
-impl Update for Md4 {
-    fn update(&mut self, input: impl AsRef<[u8]>) {
-        let input = input.as_ref();
-        // Unlike Sha1 and Sha2, the length value in MD4 is defined as
-        // the length of the message mod 2^64 - ie: integer overflow is OK.
-        self.length_bytes = self.length_bytes.wrapping_add(input.len() as u64);
-        let s = &mut self.state;
-        self.buffer.input_block(input, |d| s.process_block(d));
+fn digest_to_str(digest: &[u32]) -> String {
+    let mut s = String::new();
+    for &word in digest {
+        write!(&mut s, "{:08x}", word).unwrap();
     }
+    s
 }
-
-impl FixedOutputDirty for Md4 {
-    type OutputSize = U16;
-
-    fn finalize_into_dirty(&mut self, out: &mut digest::Output<Self>) {
-        self.finalize_inner();
-
-        for (chunk, v) in out.chunks_exact_mut(4).zip(self.state.s.iter()) {
-            chunk.copy_from_slice(&v.to_le_bytes());
-        }
-    }
-}
-
-impl Reset for Md4 {
-    fn reset(&mut self) {
-        self.state = Default::default();
-        self.length_bytes = 0;
-        self.buffer.reset();
-    }
-}
-
-opaque_debug::implement!(Md4);
-digest::impl_write!(Md4);
