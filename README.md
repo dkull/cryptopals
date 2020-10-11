@@ -106,3 +106,9 @@ I created a new method "new_with_state" in sha1.rs
 s4c30 (md4 keyed mac break)
 ---
 `cargo run --release --bin s4c30_md4_keyed_mac_break`
+
+s4c31 && s4c32 (break byte-by-byte comparing HMAC API)
+---
+This solution does backtracking and multiple tries per byte.
+I can brute-force HMAC's with 1ms delay on localhost. Didn't try lower.
+`cargo run --bin s4c31_sha1_keyed_mac_timing_break`
