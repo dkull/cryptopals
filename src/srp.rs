@@ -168,15 +168,12 @@ impl SRPClient {
         ));
         let S = (B - (k * (g.modpow(&x, &N)))).modpow(&(dh.secret + (u * x)), &N);
 
-        let K = Sha256::digest(&S.to_bytes_be());
+        let K: &[u8] = &Sha256::digest(&S.to_bytes_be());
 
         /*
         send our HMAC(K, salt) to server for verification
         */
-        let mut hasher = Sha256::new();
-        hasher.update(K);
-        hasher.update(server_salt.to_bytes_be());
-        let hmac = hasher.finalize();
+        let hmac = Sha256::digest(&vec![K, &server_salt.to_bytes_be()].concat());
         stream.write_all(&bytes_to_hexbytes(&hmac)).unwrap();
 
         /*
