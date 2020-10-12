@@ -4,6 +4,7 @@ pub mod dh;
 pub mod md4;
 pub mod mt19937;
 pub mod sha1;
+pub mod srp;
 
 use std::io::{self, Read};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -27,11 +28,48 @@ pub fn random_key(length: u8) -> Vec<u8> {
         .collect::<Vec<u8>>()
 }
 
+pub fn bytes_to_hexbytes(data: &[u8]) -> Vec<u8> {
+    let mut output: Vec<u8> = vec![];
+    output.reserve(data.len() * 2);
+
+    data.to_vec().iter().for_each(|b| {
+        output.push(format!("{:x}", (b & 0xf0) >> 4).as_bytes()[0]);
+        output.push(format!("{:x}", (b & 0x0f)).as_bytes()[0]);
+    });
+    output
+}
+
+pub fn hexbytes_to_bytes(data: &[u8]) -> Vec<u8> {
+    let mut output = vec![];
+    output.reserve(data.len()); // actually need 1/2 of this
+
+    data.to_vec()
+        .chunks(2)
+        .collect::<Vec<_>>()
+        .iter()
+        .for_each(|x| {
+            let hex = format!("{}{}", x[0] as char, x[1] as char);
+            output.push(u8::from_str_radix(&hex, 16).unwrap());
+        });
+
+    output
+}
+
+#[test]
+fn hexbytes_works() {
+    let test = vec![0x00, 0x01, 0x02, 0xff];
+    let test2 = bytes_to_hexbytes(&test);
+    let test3 = hexbytes_to_bytes(&test2);
+    assert_eq!(test, test3);
+}
+
 pub fn hex_to_bytes(data: &str) -> Vec<u8> {
     let numbers = (b'0'..=b'9').collect::<Vec<u8>>();
     let lowers = (b'a'..=b'f').collect::<Vec<u8>>();
     let lookup = vec![numbers, lowers].concat();
-    data.bytes()
+    data.to_string()
+        .to_ascii_lowercase()
+        .bytes()
         .collect::<Vec<u8>>()
         .chunks(2)
         .map(|d| {

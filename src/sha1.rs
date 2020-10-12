@@ -228,7 +228,6 @@ impl Sha1 {
     /// (The function is only available if the `std` feature is enabled)
     #[cfg(feature = "std")]
     pub fn hexdigest(&self) -> std::string::String {
-        use std::string::ToString;
         self.digest().to_string()
     }
 }

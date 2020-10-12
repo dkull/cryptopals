@@ -1,7 +1,7 @@
 use num_bigint::{BigUint, RandBigInt};
 
 pub struct DiffieHellmanState {
-    secret: BigUint,
+    pub secret: BigUint,
     p: BigUint,
     g: BigUint,
     pub pubkey: BigUint,
