@@ -44,6 +44,7 @@ pub fn main() {
         3_usize.to_biguint().unwrap(),
         username,
         password,
+        &None,
     );
     println!("authed: {}", authenticated);
 }

@@ -129,3 +129,8 @@ s5c36 (SRP Client+Server)
 ---
 New library file srp.rs
 `cargo run --bin s5c36_srp_client_server`
+
+s5c37 (SRP Zero key break)
+---
+`cargo run --bin s5c37_srp_zero_key_break`
+

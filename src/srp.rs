@@ -84,6 +84,7 @@ impl SRPServer {
         ));
 
         let S = (A * user_v.modpow(&u, &self.N)).modpow(&dh.secret, &self.N);
+        println!("server got S: {}", S);
         let K: &[u8] = &Sha256::digest(&S.to_bytes_be());
 
         let etalon = Sha256::digest(&vec![K, &user_salt.to_bytes_be()].concat());
@@ -125,6 +126,7 @@ impl SRPClient {
         k: BigUint,
         username: String,
         password: String,
+        attack: &Option<BigUint>,
     ) -> bool {
         let mut stream = TcpStream::connect(connstring).unwrap();
 
@@ -132,7 +134,10 @@ impl SRPClient {
         send username and DH pubkey
         */
         let dh = DiffieHellmanState::new(&g, &N);
-        let A = dh.pubkey;
+        let A = match attack {
+            None => dh.pubkey,
+            Some(a) => a.clone(),
+        };
         stream
             .write_all(
                 &vec![
@@ -166,7 +171,11 @@ impl SRPClient {
         let x = BigUint::from_bytes_be(&Sha256::digest(
             &vec![server_salt.to_bytes_be(), password.as_bytes().to_vec()].concat(),
         ));
-        let S = (B - (k * (g.modpow(&x, &N)))).modpow(&(dh.secret + (u * x)), &N);
+        let S = match attack {
+            None => (B - (k * (g.modpow(&x, &N)))).modpow(&(dh.secret + (u * x)), &N),
+            Some(_) => 0.to_biguint().unwrap(),
+        };
+        println!("client got S: {}", S);
 
         let K: &[u8] = &Sha256::digest(&S.to_bytes_be());
 
