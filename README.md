@@ -120,3 +120,7 @@ s5c33 (implement Diffie Hellman)
 s5c34 (Diffie Hellman Key Fixing MITM)
 ---
 `cargo run --bin s5c34_dh_key_fixing_mitm`
+
+s5c35 (Diffie Hellman negotiated group MITM)
+---
+`cargo run --bin s5c35_dh_negotiated_groups_mitm`
