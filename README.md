@@ -116,3 +116,7 @@ I can brute-force HMAC's with 1ms delay on localhost. Didn't try lower.
 s5c33 (implement Diffie Hellman)
 ---
 `cargo run --bin s5c33_impl_diffie_hellman`
+
+s5c34 (Diffie Hellman Key Fixing MITM)
+---
+`cargo run --bin s5c34_dh_key_fixing_mitm`
