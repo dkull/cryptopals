@@ -19,6 +19,16 @@ impl DiffieHellmanState {
         }
     }
 
+    pub fn new_static(g: &BigUint, p: &BigUint, secret: &BigUint) -> DiffieHellmanState {
+        let pubkey = DiffieHellmanState::gen_pubkey(&p, &g, &secret);
+        DiffieHellmanState {
+            secret: secret.clone(),
+            p: p.clone(),
+            g: g.clone(),
+            pubkey,
+        }
+    }
+
     pub fn gen_shared_key(self, other_pubkey: &BigUint) -> BigUint {
         other_pubkey.modpow(&self.secret, &self.p)
     }

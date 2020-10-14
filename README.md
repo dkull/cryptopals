@@ -134,3 +134,6 @@ s5c37 (SRP Zero key break)
 ---
 `cargo run --bin s5c37_srp_zero_key_break`
 
+s5c38 (Weakened SRP offline dictionary attack)
+---
+`cargo run --bin s5c38_weakened_srp_offline_attack`

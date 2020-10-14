@@ -5,6 +5,7 @@ pub mod md4;
 pub mod mt19937;
 pub mod sha1;
 pub mod srp;
+pub mod weakened_srp;
 
 use std::io::{self, Read};
 use std::time::{SystemTime, UNIX_EPOCH};
