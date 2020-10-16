@@ -145,3 +145,7 @@ s5c39/s5c40 (RSA and E=3 broadcast attack)
 s6c41 (RSA unpadded message oracle)
 ---
 `cargo run --bin s6c41_rsa_unpadded_oracle`
+
+s6c42 (RSA Bleichenbacher signature forge)
+---
+`cargo run --bin s6c42_rsa_bleichenbacher_signature_forge`

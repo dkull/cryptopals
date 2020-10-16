@@ -1,6 +1,7 @@
 extern crate openssl;
 
 use num_bigint::{BigInt, BigUint, RandBigInt, ToBigInt, ToBigUint};
+use sha2::{Digest, Sha256};
 
 pub struct RSA {
     pub e: BigUint,
@@ -12,15 +13,6 @@ pub struct RSA {
 
 impl RSA {
     pub fn new() -> RSA {
-        let big_17 = &17.to_biguint().unwrap();
-        let big_5 = &5.to_biguint().unwrap();
-        //println!(">>> {} {}", big_17 / big_5, big_17 % big_5);
-        /*println!(
-            ">> {}",
-            RSA::mod_inv(&17.to_biguint().unwrap(), &3120.to_biguint().unwrap())
-        );*/
-        //println!("start!");
-
         let big_1 = &1.to_biguint().unwrap();
 
         let e = &3.to_biguint().unwrap();
@@ -45,6 +37,29 @@ impl RSA {
         unreachable!();
     }
 
+    /*
+    this function is 100% fake and does just enough to do the task
+    */
+    pub fn verify(&self, m: &BigUint, sig: &BigUint) -> bool {
+        let padded_sig = self.encrypt(sig).to_bytes_be();
+        let mut state = 0;
+        for (i, cur_byte) in padded_sig.iter().enumerate() {
+            let next_byte = padded_sig[i + 1];
+            if state == 0 {
+                assert_eq!(&0x01_u8, cur_byte);
+                state = 1;
+                continue;
+            }
+            if state == 1 && cur_byte == &0xff_u8 && next_byte == 0x00_u8 {
+                // take the 64 bytes of digest
+                let provided_digest: &[u8] = &padded_sig[i + 2..i + 2 + 32];
+                let calced_digest: &[u8] = &Sha256::digest(&m.to_bytes_be());
+                return provided_digest == calced_digest;
+            }
+        }
+        false
+    }
+
     pub fn encrypt(&self, m: &BigUint) -> BigUint {
         m.modpow(&self.e, &self.n)
     }
@@ -62,7 +77,11 @@ impl RSA {
         BigUint::from_bytes_be(&prime_bytes)
     }
 
-    fn xgcd(a: &BigInt, b: &BigInt) -> (BigInt, BigInt, BigInt) {
+    /*
+    unusded
+    alternative to egcd
+    */
+    fn _xgcd(a: &BigInt, b: &BigInt) -> (BigInt, BigInt, BigInt) {
         let (mut x0, mut x1, mut y0, mut y1) = (
             0.to_bigint().unwrap(),
             1.to_bigint().unwrap(),
@@ -87,12 +106,12 @@ impl RSA {
         (b, x0, y0)
     }
 
-    fn _egcd(a: &BigInt, b: &BigInt) -> (BigInt, BigInt, BigInt) {
+    fn egcd(a: &BigInt, b: &BigInt) -> (BigInt, BigInt, BigInt) {
         if a == &0.to_bigint().unwrap() {
             return (b.clone(), 0.to_bigint().unwrap(), 1.to_bigint().unwrap());
         }
         let (b_div_a, b_mod_a) = (b / a, b % a);
-        let (g, x, y) = RSA::_egcd(&b_mod_a, a);
+        let (g, x, y) = RSA::egcd(&b_mod_a, a);
         (g, y - (b_div_a * &x), x)
     }
 
@@ -100,7 +119,7 @@ impl RSA {
     pub fn mod_inv(a: &BigUint, b: &BigUint) -> Result<BigUint, ()> {
         let a = a.clone().to_bigint().unwrap();
         let b = b.clone().to_bigint().unwrap();
-        let (g, x, _) = RSA::_egcd(&a, &b);
+        let (g, x, _) = RSA::egcd(&a, &b);
         //println!(">> g:{} x:{}", g, x);
         if g != 1.to_bigint().unwrap() {
             return Err(());
