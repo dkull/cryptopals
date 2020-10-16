@@ -3,7 +3,7 @@ extern crate openssl;
 use num_bigint::{BigInt, BigUint, RandBigInt, ToBigInt, ToBigUint};
 
 pub struct RSA {
-    e: BigUint,
+    pub e: BigUint,
     pub n: BigUint,
     d: BigUint,
     pub pubkey: (BigUint, BigUint),
@@ -53,7 +53,7 @@ impl RSA {
         c.modpow(&self.d, &self.n)
     }
 
-    fn gen_big_prime() -> BigUint {
+    pub fn gen_big_prime() -> BigUint {
         use openssl::bn::BigNum;
         let mut big = BigNum::new().unwrap();
 

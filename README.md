@@ -141,3 +141,7 @@ s5c38 (Weakened SRP offline dictionary attack)
 s5c39/s5c40 (RSA and E=3 broadcast attack)
 ---
 `cargo run --bin s5c40_rsa_e3_broadcast_attack`
+
+s6c41 (RSA unpadded message oracle)
+---
+`cargo run --bin s6c41_rsa_unpadded_oracle`
