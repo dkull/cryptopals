@@ -3,6 +3,7 @@ pub mod block_ciphers;
 pub mod dh;
 pub mod md4;
 pub mod mt19937;
+pub mod rsa;
 pub mod sha1;
 pub mod srp;
 pub mod weakened_srp;

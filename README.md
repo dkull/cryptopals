@@ -137,3 +137,7 @@ s5c37 (SRP Zero key break)
 s5c38 (Weakened SRP offline dictionary attack)
 ---
 `cargo run --bin s5c38_weakened_srp_offline_attack`
+
+s5c39/s5c40 (RSA and E=3 broadcast attack)
+---
+`cargo run --bin s5c40_rsa_e3_broadcast_attack`
