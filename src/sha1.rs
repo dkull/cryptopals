@@ -190,6 +190,12 @@ impl Sha1 {
         })
     }
 
+    pub fn digest_now(data: &[u8]) -> Vec<u8> {
+        let mut sha1 = Sha1::new();
+        sha1.update(data);
+        sha1.digest().bytes().to_vec()
+    }
+
     /// Retrieve digest result.
     pub fn digest(&self) -> Digest {
         let mut state = self.state;

@@ -149,3 +149,7 @@ s6c41 (RSA unpadded message oracle)
 s6c42 (RSA Bleichenbacher signature forge)
 ---
 `cargo run --bin s6c42_rsa_bleichenbacher_signature_forge`
+
+s6c43 (DSA + DSA nonce key recovery)
+---
+`cargo run --release --bin s6c43_dsa_nonce_key_discovery`

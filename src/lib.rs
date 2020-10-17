@@ -1,6 +1,7 @@
 // reexport block_cipher stuff for cryptopals crate users
 pub mod block_ciphers;
 pub mod dh;
+pub mod dsa;
 pub mod md4;
 pub mod mt19937;
 pub mod rsa;
