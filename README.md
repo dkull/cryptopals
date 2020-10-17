@@ -153,3 +153,7 @@ s6c42 (RSA Bleichenbacher signature forge)
 s6c43 (DSA + DSA nonce key recovery)
 ---
 `cargo run --release --bin s6c43_dsa_nonce_key_discovery`
+
+s6c44 (DSA repeated nonce key discovery)
+---
+`cargo run --bin s6c44_dsa_repeated_nonce_key_discovery`
