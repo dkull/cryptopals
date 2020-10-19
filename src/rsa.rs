@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 pub struct RSA {
     pub e: BigUint,
     pub n: BigUint,
-    d: BigUint,
+    pub d: BigUint,
     pub pubkey: (BigUint, BigUint),
     privkey: (BigUint, BigUint),
 }
@@ -72,7 +72,7 @@ impl RSA {
         use openssl::bn::BigNum;
         let mut big = BigNum::new().unwrap();
 
-        big.generate_prime(1024, false, None, None).unwrap();
+        big.generate_prime(1024, true, None, None).unwrap();
         let prime_bytes = big.to_vec();
         BigUint::from_bytes_be(&prime_bytes)
     }

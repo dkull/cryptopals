@@ -161,3 +161,7 @@ s6c44 (DSA repeated nonce key discovery)
 s6c45 (DSA parameter tampering)
 ---
 `cargo run --bin s6c45_dsa_parameter_tampering`
+
+s6c46 (RSA parity oracle)
+---
+`cargo run --release --bin s6c46_rsa_parity_oracle`
