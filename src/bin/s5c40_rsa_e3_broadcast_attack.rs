@@ -10,7 +10,7 @@ pub fn main() {
     */
 
     let test_string = "ATTACK AT DAWN";
-    let rsa = RSA::new();
+    let rsa = RSA::new(1024);
     let pt = BigUint::from_bytes_be(test_string.to_string().as_bytes());
     let test = rsa.decrypt(&rsa.encrypt(&pt));
     let test_pt = String::from_utf8(test.to_bytes_be()).unwrap();
@@ -21,7 +21,7 @@ pub fn main() {
     generate attack data
     */
 
-    let rsas = vec![RSA::new(), RSA::new(), RSA::new()];
+    let rsas = vec![RSA::new(1024), RSA::new(1024), RSA::new(1024)];
 
     let cts = rsas.iter().map(|rsa| rsa.encrypt(&pt)).collect::<Vec<_>>();
 

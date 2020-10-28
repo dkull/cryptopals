@@ -165,3 +165,8 @@ s6c45 (DSA parameter tampering)
 s6c46 (RSA parity oracle)
 ---
 `cargo run --release --bin s6c46_rsa_parity_oracle`
+
+s6c47/s6c48 (RSA Bleichenbacher padding oracle)
+---
+Task 47 uses 256 bit n, 48 uses 768 bit n. It's 2020, let's go with 1024 bit n.
+`cargo run --release --bin s6c47_rsa_bleichenbacher_padding_oracle`

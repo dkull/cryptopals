@@ -10,7 +10,7 @@ pub fn main() {
     */
 
     let test_string = "ATTACK AT DAWN";
-    let rsa = RSA::new();
+    let rsa = RSA::new(1024);
     let pt = BigUint::from_bytes_be(test_string.to_string().as_bytes());
     let ct = &rsa.encrypt(&pt);
     let test = rsa.decrypt(ct);
@@ -23,7 +23,7 @@ pub fn main() {
     */
 
     // doesn't have to be prime, but it's convenient to call
-    let random_nr = &RSA::gen_big_prime() % &rsa.n;
+    let random_nr = &RSA::gen_big_prime(1024) % &rsa.n;
 
     // a different representation of the CT
     let ct_prime = &(random_nr.modpow(&rsa.e, &rsa.n)) * ct % &rsa.n;

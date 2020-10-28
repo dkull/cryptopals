@@ -33,7 +33,7 @@ pub fn main() {
     /*
     attack
     */
-    let rsa = RSA::new();
+    let rsa = RSA::new(1024);
     let oracle = Oracle { rsa };
     let secret_pt = BigUint::from_bytes_be(&cryptopals::base64_to_bytes(
         "VGhhdCdzIHdoeSBJIGZvdW5kIHlvdSBkb24ndCBwbGF5IGFyb3VuZCB3aXRoIHRoZSBGdW5reSBDb2xkIE1lZGluYQ==",

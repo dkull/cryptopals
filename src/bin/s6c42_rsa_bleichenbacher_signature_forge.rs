@@ -11,7 +11,7 @@ pub fn main() {
     authentic verifier we are trying to fool
     */
 
-    let authentic_verifier = RSA::new();
+    let authentic_verifier = RSA::new(1024);
 
     /*
     generate attack
@@ -25,6 +25,10 @@ pub fn main() {
 
     // my bignum conversion deletes the first 0x00 byte, so we leave it off
     let forged_padded_msg = &mut vec![[0x01, 0xff, 0x00].to_vec(), forged_digest].concat();
+    /*let forged_padded_msg = &mut authentic_verifier
+    .pad_pkcs_1_5(&BigUint::from_bytes_be(&forged_digest))
+    .to_bytes_be();*/
+
     for _ in 0..200 {
         // add a bunch of 0x01 bytes that the cbrt will overwrite
         // but the verifier won't read them at all
