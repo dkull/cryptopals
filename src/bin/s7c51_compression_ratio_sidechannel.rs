@@ -4,6 +4,8 @@ extern crate deflate;
 use cryptopals::block_ciphers::AESBlockMode;
 use deflate::deflate_bytes;
 
+const PADDING: &[u8] = b"!\"#$%&'()*,-./:;<>?@[\\]^_`{|}~";
+const CHARSET: &[u8] = b"+/0987654321ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 const SESSIONID: &[u8; 54] = b"sessionid=TmV2ZXIgcmV2ZWFsIHRoZSBXdS1UYW5nIFNlY3JldCE=";
 const SESS_LEN: usize = 43;
 
@@ -36,9 +38,56 @@ fn oracle(pt: &[u8], encrypt: bool) -> usize {
     }
 }
 
+fn part2_recursive(i: usize, buffer: Vec<u8>) -> Vec<u8> {
+    if buffer[i] == b'=' {
+        return buffer;
+    }
+    let mut buffer = buffer;
+    let i_baseline = oracle(&buffer, true);
+
+    println!(
+        "=== recurse i: {} baseline: {} buff: {}",
+        i,
+        i_baseline,
+        String::from_utf8_lossy(&buffer)
+    );
+
+    // set random data to end until we have a new block
+    for padding_byte in CHARSET.iter() {
+        for padding_width in 0..2048 {
+            let mut padding = Vec::with_capacity(padding_width);
+            // adding bytes one by one is crucial to hit the right spot
+            // mixing it up a bit allows us to use less padding
+            for pw in 0..padding_width {
+                if pw % 2 == 0 {
+                    padding.push(b'!');
+                } else {
+                    padding.push(*padding_byte);
+                };
+            }
+            let score = oracle(&vec![buffer.clone(), padding.clone()].concat(), true);
+
+            // not enough entropy
+            if score <= i_baseline {
+                continue;
+            }
+
+            for candidate in CHARSET.iter() {
+                buffer[i] = *candidate;
+                let oracle_input = vec![buffer.clone(), padding.clone()].concat();
+                let ratio = oracle(&oracle_input, true);
+                if ratio <= i_baseline {
+                    return part2_recursive(i + 1, buffer);
+                }
+            }
+        }
+    }
+
+    buffer
+}
+
 fn main() {
     eprintln!("(s7c51)");
-    let charset = b"+/0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
     //
     // part 1
@@ -51,7 +100,7 @@ fn main() {
         let mut best_candidate = 0u8;
         let mut best_ratio = 1000000;
 
-        for candidate in charset.iter() {
+        for candidate in CHARSET.iter() {
             buffer[i] = *candidate;
             let ratio = oracle(&buffer, false);
             if ratio < best_ratio {
@@ -78,41 +127,22 @@ fn main() {
     //
     // part 2
     //
-    let mut buffer = vec![prefix.to_vec(), [95u8; SESS_LEN].to_vec(), suffix.to_vec()].concat();
-    let mut i = prefix.len();
-    loop {
-        let mut best_candidate = 0u8;
-        let mut best_ratio = 1000000;
 
-        for candidate in charset.iter() {
-            buffer[i] = *candidate;
+    //
+    // this part uses a recursive function to add A LOT of repeating padding to the
+    // block, so we can detect the exact moment when a correct character causes 1 less block.
+    // basically we drive the compression to the point where it is a bit over
+    // the amount needed to not make a new block. only the correct letter can shorten it
+    //
 
-            // part2 magic
-            let oracle_input = vec![
-                buffer[..i + 1].to_vec(),
-                buffer[..buffer.len() - i - 1].to_vec(),
-            ]
-            .to_vec()
-            .concat();
-
-            let ratio = oracle(&oracle_input, false);
-            if ratio < best_ratio {
-                best_candidate = *candidate;
-                best_ratio = ratio;
-            }
-        }
-
-        buffer[i] = best_candidate;
-        i += 1;
-
-        println!("result: {}", String::from_utf8_lossy(&buffer.clone()));
-        if buffer[i] == b'=' {
-            break;
-        }
+    let mut inner_buffer = [0u8; SESS_LEN];
+    for c in 0..inner_buffer.len() {
+        inner_buffer[c] = PADDING[c % PADDING.len()];
     }
-
-    if buffer == SESSIONID {
-        println!("Part2 Found!");
+    let buffer = vec![prefix.to_vec(), inner_buffer.to_vec(), suffix.to_vec()].concat();
+    let result = part2_recursive(prefix.len(), buffer);
+    if result == SESSIONID {
+        println!("Part2 Found! {}", String::from_utf8_lossy(&result));
     } else {
         println!("Part2 Failed!");
     }
