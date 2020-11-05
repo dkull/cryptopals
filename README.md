@@ -178,3 +178,7 @@ s7c49 (CBC-MAC Message Forgery)
 s7c50 (CBC-MAC hashing)
 ---
 `cargo run --bin s7c50_cbc_mac_hashing`
+
+s7c51 (Compression Ratio Oracle)
+---
+`cargo run --release --bin s7c51_compression_ratio_sidechannel`
