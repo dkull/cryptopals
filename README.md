@@ -174,3 +174,7 @@ Task 47 uses 256 bit n, 48 uses 768 bit n. It's 2020, let's go with 1024 bit n.
 s7c49 (CBC-MAC Message Forgery)
 ---
 `cargo run --bin s7c49_cbc_mac_message_forgery`
+
+s7c50 (CBC-MAC hashing)
+---
+`cargo run --bin s7c50_cbc_mac_hashing`
