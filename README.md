@@ -182,3 +182,7 @@ s7c50 (CBC-MAC hashing)
 s7c51 (Compression Ratio Oracle)
 ---
 `cargo run --release --bin s7c51_compression_ratio_sidechannel`
+
+s7c52 (Iterated Hash Function Collisions)
+---
+`cargo run --release --bin s7c52_iterated_hash_fn_collisions`
