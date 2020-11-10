@@ -30,7 +30,7 @@ fn oracle(pt: &[u8], encrypt: bool) -> usize {
         compressed.len()
     } else {
         // part 2
-        let random_key = cryptopals::random_key(16);
+        let random_key = cryptopals::random_key(16 as usize);
         let mut key = [0u8; 16];
         key.copy_from_slice(&random_key);
         let ct = cryptopals::block_ciphers::aes_encrypt(&compressed, &key, None, AESBlockMode::CBC);

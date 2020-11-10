@@ -66,7 +66,7 @@ fn process(g: &BigUint, p: &BigUint, attack: bool) {
     construct Alices message
     */
     let mut alice_iv = [0u8; 16];
-    alice_iv.copy_from_slice(&cryptopals::random_key(16));
+    alice_iv.copy_from_slice(&cryptopals::random_key(16 as usize));
     let alice_msg = cryptopals::block_ciphers::aes_encrypt(
         b"hello bob!",
         &alice_aes_key,
@@ -96,7 +96,7 @@ fn process(g: &BigUint, p: &BigUint, attack: bool) {
     let Bob re-encrypt the message
     */
     let mut bob_iv = [0u8; 16];
-    bob_iv.copy_from_slice(&cryptopals::random_key(16));
+    bob_iv.copy_from_slice(&cryptopals::random_key(16 as usize));
     let bobs_msg = cryptopals::block_ciphers::aes_encrypt(
         &bob_decrypts,
         &bob_aes_key,

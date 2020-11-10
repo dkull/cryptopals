@@ -21,7 +21,7 @@ fn cbc_ecb_oracle(key: &[u8], prepend: &[u8], data: &[u8], append: &[u8]) -> Vec
 fn main() {
     eprintln!("(s2c14)");
     let append = cryptopals::base64_to_bytes(&cryptopals::load_stdin());
-    let static_key = cryptopals::random_key(16);
+    let static_key = cryptopals::random_key(16 as usize);
 
     // detecting a block size does not make sense
     let block_size = 16;

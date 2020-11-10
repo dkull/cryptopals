@@ -15,7 +15,7 @@ struct BankServer {
 
 impl BankServer {
     pub fn new() -> BankServer {
-        let random_key = cryptopals::random_key(16);
+        let random_key = cryptopals::random_key(16 as usize);
         let mut key = [0u8; 16];
         key.copy_from_slice(&random_key);
         BankServer { key }
@@ -58,7 +58,7 @@ impl BankServer {
     pub fn intercept_message(&self) -> Vec<u8> {
         let msg = BankServer::format_message(1, 2, 1000000);
 
-        let random_iv = cryptopals::random_key(16);
+        let random_iv = cryptopals::random_key(16 as usize);
         let mut iv = [0u8; 16];
         iv.copy_from_slice(&random_iv);
 

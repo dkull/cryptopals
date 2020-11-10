@@ -9,6 +9,7 @@ pub mod sha1;
 pub mod srp;
 pub mod weakened_srp;
 
+use rand::Rng;
 use std::io::{self, Read};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -25,10 +26,15 @@ pub fn load_stdin() -> String {
     buffer
 }
 
-pub fn random_key(length: u8) -> Vec<u8> {
-    (0..length)
-        .map(|_| rand::random::<u8>())
-        .collect::<Vec<u8>>()
+pub fn random_key<T: Into<usize>>(length: T) -> Vec<u8> {
+    let length = length.into() as usize;
+    let mut output: Vec<u8> = Vec::with_capacity(length);
+
+    let mut rng = rand::thread_rng();
+    for i in 0..length {
+        output.push(rng.gen());
+    }
+    output
 }
 
 pub fn bytes_to_hexbytes(data: &[u8]) -> Vec<u8> {
