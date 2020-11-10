@@ -186,3 +186,7 @@ s7c51 (Compression Ratio Oracle)
 s7c52 (Iterated Hash Function Collisions)
 ---
 `cargo run --release --bin s7c52_iterated_hash_fn_collisions`
+
+s7c53 (Kelsey and Schneier's Expandable Messages)
+---
+`cargo run --release --bin s7c53_expandable_messages`
