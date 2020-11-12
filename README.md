@@ -194,3 +194,11 @@ s7c53 (Kelsey and Schneier's Expandable Messages)
 s7c54 (Kelsey and Kohno's Nostradamus Attack)
 ---
 `cargo run --release --bin s7c54_nostradamus_attack`
+
+s7c55 (MD4 Collisions)
+---
+`TODO: Skipped`
+
+s7c56 (RC4 Single-Byte Biases)
+---
+`cargo run --release --bin s7c56_rc4_single_byte_biases`
