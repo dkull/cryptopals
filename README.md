@@ -190,3 +190,7 @@ s7c52 (Iterated Hash Function Collisions)
 s7c53 (Kelsey and Schneier's Expandable Messages)
 ---
 `cargo run --release --bin s7c53_expandable_messages`
+
+s7c54 (Kelsey and Kohno's Nostradamus Attack)
+---
+`cargo run --release --bin s7c54_nostradamus_attack`
